@@ -1,0 +1,2936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHOPMATH - Ninja Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #game-container {
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script>
+        // Game constants
+        const GAME_W = 960;
+        const GAME_H = 540;
+        const TILE = 16;
+        const ZOOM = 3;
+        
+        // Global game state
+        let gameState = {
+            coins: 0,
+            hearts: 5,
+            streak: 0,
+            currentWorld: 'meadow',
+            grassCut: 0, // Reset per world
+            showTutorial: true,
+            completedWorlds: new Set(),
+            xp: 0,
+            level: 1,
+            mathProgress: {
+                mastered: {},    // "7x8": {correct: 3, lastSeen: timestamp}
+                struggling: {},  // "7x8": {wrong: 2, lastSeen: timestamp}
+                queue: [],       // upcoming problems, struggling ones appear 3x more often
+                lastProblem: null
+            }
+        };
+
+        // World configurations
+        const WORLDS = {
+            meadow: {
+                key: 'meadow',
+                name: 'Meadow Village',
+                size: { width: 40, height: 30 },
+                music: 'music-meadow',
+                tint: 0xffffff,
+                grassRequired: 10,
+                portals: [
+                    { x: 38, y: 15, target: 'riverside', spawnX: 2, spawnY: 15, color: 0x4a9cff, sign: '→ Riverside' }
+                ],
+                npcs: [
+                    { x: 16, y: 14, sprite: 'villager', name: 'Elder', dialogue: "Welcome young ninja! Cut the tall grass to find coins. The portal east leads to the riverside." },
+                    { x: 22, y: 15, sprite: 'villager2', name: 'Young Ninja', dialogue: "Press SPACE to slash grass and collect coins! I've seen treasure hidden everywhere!" },
+                    { x: 19, y: 18, sprite: 'oldman', name: 'Wise Master', dialogue: "Collect enough coins and the portal will open. Each world has its own challenge, young one." }
+                ],
+                monsters: [],
+                structures: [
+                    { type: 'house', x: 8, y: 6, width: 4, height: 3 },
+                    { type: 'house', x: 22, y: 10, width: 4, height: 3 },
+                    { type: 'well', x: 15, y: 15 },
+                    { type: 'fence', x: 6, y: 5, length: 8, direction: 'horizontal' },
+                    { type: 'house', x: 30, y: 20, width: 3, height: 3 }
+                ]
+            },
+            riverside: {
+                key: 'riverside',
+                name: 'Riverside',
+                size: { width: 40, height: 30 },
+                music: 'music-riverside',
+                tint: 0xffffff,
+                grassRequired: 15,
+                portals: [
+                    { x: 1, y: 15, target: 'meadow', spawnX: 37, spawnY: 15, color: 0x4a9c4a, sign: '← Meadow Village' },
+                    { x: 38, y: 15, target: 'bamboo', spawnX: 2, spawnY: 15, color: 0x2d5d2d, sign: '→ Bamboo Forest' }
+                ],
+                npcs: [],
+                monsters: [
+                    { x: 15, y: 8, sprite: 'slime', name: 'River Slime' },
+                    { x: 28, y: 20, sprite: 'fish', name: 'Jumping Fish' }
+                ],
+                structures: [
+                    { type: 'bridge', x: 18, y: 6, direction: 'horizontal' },
+                    { type: 'dock', x: 32, y: 8 },
+                    { type: 'watermill', x: 25, y: 25 }
+                ]
+            },
+            bamboo: {
+                key: 'bamboo',
+                name: 'Bamboo Forest',
+                size: { width: 40, height: 30 },
+                music: 'music-bamboo',
+                tint: 0xddffdd,
+                grassRequired: 20,
+                portals: [
+                    { x: 1, y: 15, target: 'riverside', spawnX: 37, spawnY: 15, color: 0x4a9cff, sign: '← Riverside' },
+                    { x: 20, y: 1, target: 'desert', spawnX: 20, spawnY: 27, color: 0xffb84a, sign: '↑ Desert Outpost' }
+                ],
+                npcs: [],
+                monsters: [
+                    { x: 12, y: 10, sprite: 'mushroom', name: 'Forest Shroom' },
+                    { x: 25, y: 18, sprite: 'larva', name: 'Bamboo Larva' }
+                ],
+                structures: [
+                    { type: 'bamboo_cluster', x: 8, y: 8 },
+                    { type: 'bamboo_cluster', x: 30, y: 12 },
+                    { type: 'mushroom_ring', x: 20, y: 20 },
+                    { type: 'shrine', x: 15, y: 8 }
+                ]
+            },
+            desert: {
+                key: 'desert',
+                name: 'Desert Outpost',
+                size: { width: 40, height: 30 },
+                music: 'music-desert',
+                tint: 0xffffcc,
+                grassRequired: 10,
+                portals: [
+                    { x: 20, y: 28, target: 'bamboo', spawnX: 20, spawnY: 2, color: 0x2d5d2d, sign: '↓ Bamboo Forest' },
+                    { x: 20, y: 1, target: 'fortress', spawnX: 15, spawnY: 27, color: 0x4a4a4a, sign: '↑ Dark Fortress' }
+                ],
+                npcs: [
+                    { x: 15, y: 12, sprite: 'villager', name: 'Desert Trader', dialogue: "Beware the fortress to the north... Dark creatures guard ancient treasures there." }
+                ],
+                monsters: [
+                    { x: 10, y: 18, sprite: 'lizard', name: 'Sand Lizard' },
+                    { x: 28, y: 8, sprite: 'snake', name: 'Desert Viper' }
+                ],
+                structures: [
+                    { type: 'desert_building', x: 12, y: 10, width: 4, height: 3 },
+                    { type: 'palm_trees', x: 8, y: 20 },
+                    { type: 'market_stalls', x: 25, y: 15 },
+                    { type: 'oasis', x: 30, y: 25 }
+                ]
+            },
+            fortress: {
+                key: 'fortress',
+                name: 'Dark Fortress',
+                size: { width: 30, height: 30 },
+                music: 'music-fortress',
+                tint: 0xcccccc,
+                grassRequired: 5,
+                portals: [
+                    { x: 15, y: 28, target: 'desert', spawnX: 20, spawnY: 2, color: 0xffb84a, sign: '↓ Desert Outpost' }
+                ],
+                npcs: [],
+                monsters: [
+                    { x: 10, y: 10, sprite: 'skeleton', name: 'Bone Guard' },
+                    { x: 20, y: 8, sprite: 'dragon', name: 'Shadow Dragon' }
+                ],
+                structures: [
+                    { type: 'castle_wall', x: 5, y: 5, length: 20, direction: 'horizontal' },
+                    { type: 'castle_wall', x: 5, y: 5, length: 15, direction: 'vertical' },
+                    { type: 'boss_arena', x: 15, y: 15 },
+                    { type: 'tower', x: 8, y: 8 },
+                    { type: 'tower', x: 22, y: 8 }
+                ]
+            }
+        };
+
+        // Math Encounter Manager
+        class MathEncounterManager {
+            constructor(scene) {
+                this.scene = scene;
+                this.isActive = false;
+                this.currentProblem = null;
+                this.currentAnswer = '';
+                this.wrongAttempts = 0;
+                this.monster = null;
+                this.encounterPanel = null;
+                this.panelShadow = null;
+                this.problemText = null;
+                this.answerText = null;
+                this.answerCursor = null;
+                this.numpadButtons = [];
+                this.messageText = null;
+                this.overlay = null;
+                this.particleEmitters = [];
+                this.numberKeys = null;
+                this.backspaceKey = null;
+                this.enterKey = null;
+                this.mathStreak = 0;
+                this.monsterAura = null;
+                this.monsterName = null;
+                this.streakDisplay = null;
+                this.hintBubble = null;
+            }
+
+            startEncounter(grassX, grassY) {
+                if (this.isActive) return;
+
+                this.isActive = true;
+                this.scene.player.setVelocity(0, 0);
+                this.scene.isAttacking = false;
+
+                // Generate or select problem
+                this.currentProblem = this.generateProblem();
+                this.currentAnswer = '';
+                this.wrongAttempts = 0;
+
+                // Create encounter UI
+                this.createEncounterUI(grassX, grassY);
+
+                // Set up input
+                this.setupInput();
+            }
+
+            generateProblem() {
+                const world = gameState.currentWorld;
+                const mathProgress = gameState.mathProgress;
+                
+                // 60% chance to pick from struggling queue if available
+                if (mathProgress.struggling && Object.keys(mathProgress.struggling).length > 0 && Math.random() < 0.6) {
+                    const strugglingProblems = Object.keys(mathProgress.struggling);
+                    const problemKey = Phaser.Utils.Array.GetRandom(strugglingProblems);
+                    return this.parseProblemKey(problemKey);
+                }
+
+                // Generate new problem based on world
+                let problem;
+                switch (world) {
+                    case 'meadow': // Addition
+                        const a1 = Phaser.Math.Between(1, 9);
+                        const b1 = Phaser.Math.Between(1, 9);
+                        problem = { a: a1, b: b1, op: '+', answer: a1 + b1, display: `${a1} + ${b1} = ?` };
+                        break;
+
+                    case 'riverside': // Subtraction
+                        const a2 = Phaser.Math.Between(10, 18);
+                        const b2 = Phaser.Math.Between(1, Math.min(9, a2 - 1));
+                        problem = { a: a2, b: b2, op: '-', answer: a2 - b2, display: `${a2} - ${b2} = ?` };
+                        break;
+
+                    case 'bamboo': // Multiplication
+                        const a3 = Phaser.Math.Between(2, 12);
+                        const b3 = Phaser.Math.Between(2, 12);
+                        problem = { a: a3, b: b3, op: '×', answer: a3 * b3, display: `${a3} × ${b3} = ?` };
+                        break;
+
+                    case 'desert': // Division
+                        const b4 = Phaser.Math.Between(2, 12);
+                        const answer4 = Phaser.Math.Between(2, 12);
+                        const a4 = b4 * answer4;
+                        problem = { a: a4, b: b4, op: '÷', answer: answer4, display: `${a4} ÷ ${b4} = ?` };
+                        break;
+
+                    case 'fortress': // Mixed
+                        const operations = ['meadow', 'riverside', 'bamboo', 'desert'];
+                        const randomWorld = Phaser.Utils.Array.GetRandom(operations);
+                        const tempWorld = gameState.currentWorld;
+                        gameState.currentWorld = randomWorld;
+                        problem = this.generateProblem();
+                        gameState.currentWorld = tempWorld;
+                        break;
+
+                    default:
+                        problem = { a: 2, b: 3, op: '+', answer: 5, display: '2 + 3 = ?' };
+                }
+
+                // Ensure we don't repeat the same problem
+                const problemKey = `${problem.a}${problem.op}${problem.b}`;
+                if (problemKey === gameState.mathProgress.lastProblem) {
+                    // Try again with different numbers
+                    return this.generateProblem();
+                }
+
+                gameState.mathProgress.lastProblem = problemKey;
+                return problem;
+            }
+
+            parseProblemKey(key) {
+                // Parse "7x8" back into problem object
+                const ops = ['+', '-', '×', '÷'];
+                let op = null;
+                let parts = null;
+
+                for (const o of ops) {
+                    if (key.includes(o)) {
+                        op = o;
+                        parts = key.split(o);
+                        break;
+                    }
+                }
+
+                if (!parts || parts.length !== 2) {
+                    return { a: 2, b: 3, op: '+', answer: 5, display: '2 + 3 = ?' };
+                }
+
+                const a = parseInt(parts[0]);
+                const b = parseInt(parts[1]);
+                let answer;
+
+                switch (op) {
+                    case '+': answer = a + b; break;
+                    case '-': answer = a - b; break;
+                    case '×': answer = a * b; break;
+                    case '÷': answer = a / b; break;
+                }
+
+                return { a, b, op, answer, display: `${a} ${op} ${b} = ?` };
+            }
+
+            createEncounterUI(grassX, grassY) {
+                // Create background particles first (math symbols floating)
+                this.createBackgroundParticles();
+
+                // Dark semi-transparent overlay
+                this.overlay = this.scene.add.rectangle(GAME_W/2, GAME_H/2, GAME_W, GAME_H, 0x000000, 0.7);
+                this.overlay.setScrollFactor(0).setDepth(100);
+
+                // Panel shadow (offset dark rectangle behind main panel)
+                this.panelShadow = this.scene.add.graphics();
+                this.panelShadow.setScrollFactor(0).setDepth(101);
+                this.panelShadow.fillStyle(0x000000, 0.8);
+                this.panelShadow.fillRoundedRect(GAME_W/2 - 350 + 3, GAME_H/2 - 225 + 3, 700, 450, 15);
+
+                // Encounter panel with rich gradient and golden border
+                this.encounterPanel = this.scene.add.graphics();
+                this.encounterPanel.setScrollFactor(0).setDepth(102);
+                
+                // Create gradient effect by layering rectangles
+                this.encounterPanel.fillGradientStyle(0x1a1a3a, 0x1a1a3a, 0x2a2a5a, 0x2a2a5a, 1);
+                this.encounterPanel.fillRoundedRect(GAME_W/2 - 350, GAME_H/2 - 225, 700, 450, 15);
+                
+                // Golden outer border
+                this.encounterPanel.lineStyle(4, 0xffd700);
+                this.encounterPanel.strokeRoundedRect(GAME_W/2 - 350, GAME_H/2 - 225, 700, 450, 15);
+                
+                // Inner glow effect (lighter border inside)
+                this.encounterPanel.lineStyle(2, 0x4444aa, 0.8);
+                this.encounterPanel.strokeRoundedRect(GAME_W/2 - 345, GAME_H/2 - 220, 690, 440, 12);
+
+                // Panel entrance animation
+                this.encounterPanel.setScale(0.8);
+                this.panelShadow.setScale(0.8);
+                this.scene.tweens.add({
+                    targets: [this.encounterPanel, this.panelShadow],
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 400,
+                    ease: 'Back.easeOut'
+                });
+
+                // Show streak display if active
+                this.createStreakDisplay();
+
+                // Spawn monster with epic presentation
+                this.createEpicMonster();
+
+                // Problem text with style
+                this.createStyledProblemText();
+
+                // Modern answer input
+                this.createModernAnswerInput();
+
+                // Game-style numpad
+                this.createGameStyleNumpad();
+
+                // Message text area
+                this.messageText = this.scene.add.text(GAME_W/2, GAME_H/2 + 180, '', {
+                    fontFamily: 'Nunito',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    fill: '#ff8844',
+                    align: 'center'
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(105);
+            }
+
+            createBackgroundParticles() {
+                // Create floating math symbols
+                const symbols = ['+', '-', '×', '÷', '=', '?'];
+                
+                for (let i = 0; i < 15; i++) {
+                    const symbol = Phaser.Utils.Array.GetRandom(symbols);
+                    const particle = this.scene.add.text(
+                        Phaser.Math.Between(0, GAME_W), 
+                        Phaser.Math.Between(0, GAME_H),
+                        symbol,
+                        {
+                            fontSize: '24px',
+                            fill: '#333366',
+                            alpha: 0.3
+                        }
+                    );
+                    particle.setScrollFactor(0).setDepth(99);
+                    
+                    // Slow drift animation
+                    this.scene.tweens.add({
+                        targets: particle,
+                        x: particle.x + Phaser.Math.Between(-100, 100),
+                        y: particle.y + Phaser.Math.Between(-50, 50),
+                        duration: Phaser.Math.Between(8000, 12000),
+                        repeat: -1,
+                        yoyo: true,
+                        ease: 'Sine.easeInOut'
+                    });
+                    
+                    this.particleEmitters.push(particle);
+                }
+            }
+
+            createStreakDisplay() {
+                if (gameState.streak > 1) {
+                    let streakColor = '#ff8844';
+                    if (gameState.streak >= 10) streakColor = '#aa44ff';
+                    else if (gameState.streak >= 5) streakColor = '#ff4444';
+                    
+                    this.streakDisplay = this.scene.add.text(GAME_W/2, GAME_H/2 - 280, `🔥 Streak: ${gameState.streak}`, {
+                        fontFamily: 'Nunito',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        fill: streakColor,
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5).setScrollFactor(0).setDepth(106);
+                    
+                    // Flame animation
+                    this.scene.tweens.add({
+                        targets: this.streakDisplay,
+                        scaleX: 1.1,
+                        scaleY: 1.1,
+                        duration: 800,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                }
+            }
+
+            createEpicMonster() {
+                const worldConfig = WORLDS[gameState.currentWorld];
+                const monsters = worldConfig.monsters.length > 0 ? worldConfig.monsters : [
+                    { sprite: 'slime', name: 'Math Monster' }
+                ];
+                const monsterData = Phaser.Utils.Array.GetRandom(monsters);
+                
+                // Glowing aura behind monster
+                this.monsterAura = this.scene.add.circle(GAME_W/2, GAME_H/2 - 100, 45, 0x4488ff, 0.4);
+                this.monsterAura.setScrollFactor(0).setDepth(103);
+                
+                // Pulsing aura animation
+                this.scene.tweens.add({
+                    targets: this.monsterAura,
+                    alpha: { from: 0.2, to: 0.6 },
+                    scaleX: { from: 0.9, to: 1.1 },
+                    scaleY: { from: 0.9, to: 1.1 },
+                    duration: 1200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                // Large monster sprite
+                this.monster = this.scene.add.sprite(GAME_W/2, GAME_H/2 - 100, monsterData.sprite + '-idle', 0);
+                this.monster.setScrollFactor(0).setDepth(104);
+                this.monster.play(monsterData.sprite + '-idle-down');
+                this.monster.setScale(5); // Much larger!
+
+                // Monster entrance animation with dramatic bounce
+                this.monster.setScale(0);
+                this.scene.tweens.add({
+                    targets: this.monster,
+                    scaleX: 5,
+                    scaleY: 5,
+                    duration: 500,
+                    ease: 'Back.easeOut'
+                });
+
+                // Subtle idle bob animation
+                this.scene.tweens.add({
+                    targets: this.monster,
+                    y: GAME_H/2 - 105,
+                    duration: 2000,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+
+                // Monster name display
+                this.monsterName = this.scene.add.text(GAME_W/2, GAME_H/2 - 50, monsterData.name, {
+                    fontFamily: 'Nunito',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(104);
+
+                // Create sparkle effects around monster
+                this.createMonsterSparkles();
+            }
+
+            createMonsterSparkles() {
+                for (let i = 0; i < 8; i++) {
+                    const sparkle = this.scene.add.text(
+                        GAME_W/2 + Phaser.Math.Between(-60, 60),
+                        GAME_H/2 - 100 + Phaser.Math.Between(-60, 60),
+                        '✨',
+                        { fontSize: '16px', alpha: 0.7 }
+                    );
+                    sparkle.setScrollFactor(0).setDepth(103);
+                    
+                    this.scene.tweens.add({
+                        targets: sparkle,
+                        alpha: { from: 0.3, to: 0.9 },
+                        scaleX: { from: 0.8, to: 1.2 },
+                        scaleY: { from: 0.8, to: 1.2 },
+                        duration: Phaser.Math.Between(1500, 2500),
+                        yoyo: true,
+                        repeat: -1,
+                        delay: i * 200
+                    });
+                    
+                    this.particleEmitters.push(sparkle);
+                }
+            }
+
+            createStyledProblemText() {
+                // Split the problem to style the "= ?" part differently
+                const parts = this.currentProblem.display.split(' = ');
+                const mathPart = parts[0];
+                const questionPart = '= ?';
+                
+                // Main problem text (huge and bold)
+                this.problemText = this.scene.add.text(GAME_W/2, GAME_H/2 + 20, mathPart, {
+                    fontFamily: 'Nunito',
+                    fontSize: '56px',
+                    fontWeight: '900',
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(104);
+
+                // "= ?" part in gold/yellow
+                this.questionPartText = this.scene.add.text(GAME_W/2 + 80, GAME_H/2 + 20, questionPart, {
+                    fontFamily: 'Nunito',
+                    fontSize: '56px',
+                    fontWeight: '900',
+                    fill: '#ffd700',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(104);
+
+                // Pulse animation on problem text
+                this.scene.tweens.add({
+                    targets: [this.problemText, this.questionPartText],
+                    scaleX: 1.05,
+                    scaleY: 1.05,
+                    duration: 1500,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+
+            createModernAnswerInput() {
+                // Answer input background (dark with bright border)
+                this.answerBg = this.scene.add.graphics();
+                this.answerBg.setScrollFactor(0).setDepth(103);
+                this.answerBg.fillStyle(0x2a2a4a);
+                this.answerBg.fillRoundedRect(GAME_W/2 - 60, GAME_H/2 + 65, 120, 50, 8);
+                this.answerBg.lineStyle(3, 0x00ff88);
+                this.answerBg.strokeRoundedRect(GAME_W/2 - 60, GAME_H/2 + 65, 120, 50, 8);
+
+                // Answer text (bright green on dark)
+                this.answerText = this.scene.add.text(GAME_W/2, GAME_H/2 + 90, '___', {
+                    fontFamily: 'Nunito',
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    fill: '#00ff88'
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(104);
+
+                // Blinking cursor
+                this.answerCursor = this.scene.add.text(GAME_W/2 + 30, GAME_H/2 + 90, '|', {
+                    fontFamily: 'Nunito',
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    fill: '#00ff88'
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(104);
+
+                // Cursor blink animation
+                this.scene.tweens.add({
+                    targets: this.answerCursor,
+                    alpha: { from: 0, to: 1 },
+                    duration: 600,
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+
+            createGameStyleNumpad() {
+                const startX = GAME_W/2 - 90;
+                const startY = GAME_H/2 + 140;
+                const buttonSize = 60;
+                const spacing = 70;
+
+                // Button layout
+                const layout = [
+                    ['1', '2', '3'],
+                    ['4', '5', '6'],
+                    ['7', '8', '9'],
+                    ['←', '0', '✓']
+                ];
+
+                layout.forEach((row, rowIndex) => {
+                    row.forEach((label, colIndex) => {
+                        const x = startX + colIndex * spacing;
+                        const y = startY + rowIndex * spacing;
+
+                        // Button color scheme
+                        let topColor, bottomColor;
+                        if (label >= '0' && label <= '9') {
+                            // Number buttons: blue/teal gradient
+                            topColor = 0x4488ff;
+                            bottomColor = 0x2266cc;
+                        } else if (label === '←') {
+                            // Backspace: orange/red gradient
+                            topColor = 0xff8844;
+                            bottomColor = 0xcc4422;
+                        } else if (label === '✓') {
+                            // Submit: bright green gradient
+                            topColor = 0x44ff44;
+                            bottomColor = 0x22cc22;
+                        }
+
+                        // Button background with 3D effect
+                        const button = this.scene.add.graphics();
+                        button.setScrollFactor(0).setDepth(103);
+                        
+                        // Create gradient effect and 3D depth
+                        button.fillGradientStyle(topColor, topColor, bottomColor, bottomColor, 1);
+                        button.fillRoundedRect(x - buttonSize/2, y - buttonSize/2, buttonSize, buttonSize, 8);
+                        
+                        // Darker bottom edge for 3D effect
+                        button.fillStyle(bottomColor * 0.7);
+                        button.fillRoundedRect(x - buttonSize/2, y - buttonSize/2 + 2, buttonSize, buttonSize - 2, 8);
+                        
+                        // Top surface
+                        button.fillGradientStyle(topColor, topColor, bottomColor, bottomColor, 1);
+                        button.fillRoundedRect(x - buttonSize/2, y - buttonSize/2, buttonSize, buttonSize - 4, 8);
+                        
+                        // Border
+                        button.lineStyle(2, 0x000000, 0.5);
+                        button.strokeRoundedRect(x - buttonSize/2, y - buttonSize/2, buttonSize, buttonSize, 8);
+
+                        // Button text
+                        const text = this.scene.add.text(x, y - 2, label, {
+                            fontFamily: 'Nunito',
+                            fontSize: '28px',
+                            fontWeight: 'bold',
+                            fill: '#ffffff',
+                            stroke: '#000000',
+                            strokeThickness: 2
+                        }).setOrigin(0.5).setScrollFactor(0).setDepth(104);
+
+                        // Interactive area
+                        const hitArea = this.scene.add.rectangle(x, y, buttonSize, buttonSize);
+                        hitArea.setScrollFactor(0).setDepth(105).setVisible(false).setInteractive();
+
+                        // Store button data
+                        const buttonData = { 
+                            button, text, hitArea, x, y, buttonSize, 
+                            label, topColor, bottomColor,
+                            isPressed: false
+                        };
+
+                        // Button interactions
+                        hitArea.on('pointerdown', () => {
+                            if (buttonData.isPressed) return;
+                            this.handleNumpadInput(label);
+                            this.animateButtonPress(buttonData);
+                        });
+
+                        hitArea.on('pointerover', () => {
+                            if (!buttonData.isPressed) {
+                                this.animateButtonHover(buttonData, true);
+                            }
+                        });
+
+                        hitArea.on('pointerout', () => {
+                            if (!buttonData.isPressed) {
+                                this.animateButtonHover(buttonData, false);
+                            }
+                        });
+
+                        this.numpadButtons.push(buttonData);
+                    });
+                });
+            }
+
+            animateButtonPress(buttonData) {
+                buttonData.isPressed = true;
+                
+                // Button shifts down and gets darker
+                this.scene.tweens.add({
+                    targets: [buttonData.button, buttonData.text],
+                    y: buttonData.y + 2,
+                    scaleX: 0.95,
+                    scaleY: 0.95,
+                    duration: 100,
+                    onComplete: () => {
+                        // Return to normal
+                        this.scene.tweens.add({
+                            targets: [buttonData.button, buttonData.text],
+                            y: buttonData.y,
+                            scaleX: 1,
+                            scaleY: 1,
+                            duration: 100,
+                            onComplete: () => {
+                                buttonData.isPressed = false;
+                            }
+                        });
+                    }
+                });
+            }
+
+            animateButtonHover(buttonData, isHover) {
+                const scale = isHover ? 1.05 : 1.0;
+                const brightness = isHover ? 1.2 : 1.0;
+                
+                this.scene.tweens.add({
+                    targets: [buttonData.button, buttonData.text],
+                    scaleX: scale,
+                    scaleY: scale,
+                    duration: 150
+                });
+                
+                if (isHover) {
+                    buttonData.button.setTint(0xffffff * brightness);
+                } else {
+                    buttonData.button.clearTint();
+                }
+            }
+
+            setupInput() {
+                // Number keys 0-9
+                this.numberKeys = [];
+                for (let i = 0; i <= 9; i++) {
+                    const key = this.scene.input.keyboard.addKey('DIGIT' + i);
+                    key.on('down', () => this.handleNumpadInput(i.toString()));
+                    this.numberKeys.push(key);
+                }
+
+                // Backspace
+                this.backspaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.BACKSPACE);
+                this.backspaceKey.on('down', () => this.handleNumpadInput('←'));
+
+                // Enter
+                this.enterKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+                this.enterKey.on('down', () => this.handleNumpadInput('✓'));
+            }
+
+            handleNumpadInput(input) {
+                if (!this.isActive) return;
+
+                if (input === '←') {
+                    // Backspace
+                    this.currentAnswer = this.currentAnswer.slice(0, -1);
+                } else if (input === '✓') {
+                    // Submit
+                    this.submitAnswer();
+                    return;
+                } else if (input >= '0' && input <= '9') {
+                    // Number input (max 3 digits)
+                    if (this.currentAnswer.length < 3) {
+                        this.currentAnswer += input;
+                        
+                        // Scale-in animation for new number
+                        this.answerText.setScale(1.2);
+                        this.scene.tweens.add({
+                            targets: this.answerText,
+                            scaleX: 1,
+                            scaleY: 1,
+                            duration: 200,
+                            ease: 'Back.easeOut'
+                        });
+                    }
+                }
+
+                // Update answer display
+                this.answerText.setText(this.currentAnswer || '___');
+                
+                // Update cursor position
+                const textWidth = this.currentAnswer ? this.answerText.getBounds().width : 0;
+                this.answerCursor.x = GAME_W/2 + textWidth/2 + 10;
+            }
+
+            submitAnswer() {
+                const playerAnswer = parseInt(this.currentAnswer);
+                const correctAnswer = this.currentProblem.answer;
+                const problemKey = `${this.currentProblem.a}${this.currentProblem.op}${this.currentProblem.b}`;
+
+                if (playerAnswer === correctAnswer) {
+                    this.handleCorrectAnswer(problemKey);
+                } else {
+                    this.handleWrongAnswer(problemKey);
+                }
+            }
+
+            handleCorrectAnswer(problemKey) {
+                // Create screen border flash effect
+                const flash = this.scene.add.rectangle(GAME_W/2, GAME_H/2, GAME_W + 20, GAME_H + 20, 0x00ff00);
+                flash.setScrollFactor(0).setDepth(110).setAlpha(0);
+                flash.setStrokeStyle(10, 0x00ff00);
+                
+                this.scene.tweens.add({
+                    targets: flash,
+                    alpha: { from: 0, to: 0.4 },
+                    duration: 150,
+                    yoyo: true,
+                    repeat: 1,
+                    onComplete: () => flash.destroy()
+                });
+
+                // BIG "CORRECT!" message with rainbow gradient effect
+                const correctMsg = this.scene.add.text(GAME_W/2, GAME_H/2 - 30, '✓ CORRECT!', {
+                    fontFamily: 'Nunito',
+                    fontSize: '48px',
+                    fontWeight: '900',
+                    fill: '#ffd700',
+                    stroke: '#000000',
+                    strokeThickness: 4
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(107);
+
+                // Make text appear with scale animation
+                correctMsg.setScale(0);
+                this.scene.tweens.add({
+                    targets: correctMsg,
+                    scaleX: 1.2,
+                    scaleY: 1.2,
+                    duration: 300,
+                    ease: 'Back.easeOut',
+                    onComplete: () => {
+                        this.scene.tweens.add({
+                            targets: correctMsg,
+                            scaleX: 1,
+                            scaleY: 1,
+                            duration: 200
+                        });
+                    }
+                });
+
+                // Color cycling effect for correct message
+                let colorIndex = 0;
+                const rainbowColors = ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff'];
+                const colorTimer = this.scene.time.addEvent({
+                    delay: 150,
+                    callback: () => {
+                        correctMsg.setFill(rainbowColors[colorIndex % rainbowColors.length]);
+                        colorIndex++;
+                    },
+                    repeat: 10
+                });
+
+                // Monster dramatic death animation
+                this.scene.tweens.add({
+                    targets: this.monster,
+                    scaleX: 0,
+                    scaleY: 0,
+                    rotation: 6.28, // Full spin
+                    alpha: 0,
+                    duration: 800,
+                    ease: 'Power2.easeIn'
+                });
+
+                // Aura disappears
+                if (this.monsterAura) {
+                    this.scene.tweens.add({
+                        targets: this.monsterAura,
+                        scaleX: 2,
+                        scaleY: 2,
+                        alpha: 0,
+                        duration: 600
+                    });
+                }
+
+                // Award XP and show it
+                this.mathStreak++;
+                const xpGained = 15 + (this.mathStreak * 5);
+                gameState.xp += xpGained;
+
+                // Check for level up
+                const newLevel = Math.floor(gameState.xp / 100) + 1;
+                if (newLevel > gameState.level) {
+                    gameState.level = newLevel;
+                }
+
+                // Floating XP text with upward drift
+                const xpText = this.scene.add.text(GAME_W/2, GAME_H/2 - 140, `+${xpGained} XP`, {
+                    fontFamily: 'Nunito',
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    fill: '#00aa00',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(107);
+
+                this.scene.tweens.add({
+                    targets: xpText,
+                    y: GAME_H/2 - 200,
+                    alpha: 0,
+                    scaleX: 1.5,
+                    scaleY: 1.5,
+                    duration: 2000,
+                    ease: 'Power2.easeOut',
+                    onComplete: () => xpText.destroy()
+                });
+
+                // Coin explosion effect
+                this.createCoinExplosion();
+
+                // Update math progress
+                const mathProgress = gameState.mathProgress;
+                if (!mathProgress.mastered[problemKey]) {
+                    mathProgress.mastered[problemKey] = { correct: 0, lastSeen: Date.now() };
+                }
+                mathProgress.mastered[problemKey].correct++;
+                mathProgress.mastered[problemKey].lastSeen = Date.now();
+
+                // Remove from struggling if mastered (3 correct)
+                if (mathProgress.mastered[problemKey].correct >= 3) {
+                    delete mathProgress.struggling[problemKey];
+                } else if (mathProgress.struggling[problemKey]) {
+                    delete mathProgress.struggling[problemKey];
+                }
+
+                // Spawn extra coins in the world
+                const coinCount = Phaser.Math.Between(3, 5);
+                this.scene.time.delayedCall(600, () => {
+                    for (let i = 0; i < coinCount; i++) {
+                        this.scene.time.delayedCall(i * 100, () => {
+                            const worldX = this.scene.player.x + Phaser.Math.Between(-30, 30);
+                            const worldY = this.scene.player.y + Phaser.Math.Between(-30, 30);
+                            this.scene.spawnCoin(worldX, worldY);
+                        });
+                    }
+                });
+
+                // Clean up celebration elements and end encounter after delay
+                this.scene.time.delayedCall(1500, () => {
+                    correctMsg.destroy();
+                    this.endEncounter();
+                });
+            }
+
+            createCoinExplosion() {
+                // Create coins that explode outward from the monster
+                for (let i = 0; i < 12; i++) {
+                    const coin = this.scene.add.text(GAME_W/2, GAME_H/2 - 100, '🪙', {
+                        fontSize: '24px'
+                    });
+                    coin.setScrollFactor(0).setDepth(108);
+                    
+                    const angle = (i / 12) * Math.PI * 2;
+                    const distance = Phaser.Math.Between(80, 150);
+                    const targetX = GAME_W/2 + Math.cos(angle) * distance;
+                    const targetY = GAME_H/2 - 100 + Math.sin(angle) * distance;
+                    
+                    this.scene.tweens.add({
+                        targets: coin,
+                        x: targetX,
+                        y: targetY,
+                        alpha: 0,
+                        scaleX: 2,
+                        scaleY: 2,
+                        duration: 800,
+                        ease: 'Power2.easeOut',
+                        delay: i * 50,
+                        onComplete: () => coin.destroy()
+                    });
+                }
+            }
+
+            handleWrongAnswer(problemKey) {
+                this.wrongAttempts++;
+                
+                // Gentle shake animation on answer box only
+                const originalX = this.answerBg.x;
+                this.scene.tweens.add({
+                    targets: [this.answerBg, this.answerText, this.answerCursor],
+                    x: originalX + 10,
+                    duration: 80,
+                    yoyo: true,
+                    repeat: 2,
+                    ease: 'Power2.easeOut'
+                });
+
+                // Encouraging messages with emoji
+                const encouragingMessages = [
+                    "🌟 Almost! Try again!",
+                    "✨ So close! One more try!",
+                    "💫 You've got this!",
+                    "🎯 Think about it..."
+                ];
+
+                let message = Phaser.Utils.Array.GetRandom(encouragingMessages);
+
+                // Show hint after 2 wrong attempts in a bubble
+                if (this.wrongAttempts >= 2) {
+                    this.showHintBubble();
+                } else {
+                    // Show encouraging message that slides in from bottom
+                    const msgText = this.scene.add.text(GAME_W/2, GAME_H + 50, message, {
+                        fontFamily: 'Nunito',
+                        fontSize: '22px',
+                        fontWeight: 'bold',
+                        fill: '#ff8844',
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5).setScrollFactor(0).setDepth(107);
+                    
+                    // Slide in from bottom
+                    this.scene.tweens.add({
+                        targets: msgText,
+                        y: GAME_H/2 + 200,
+                        duration: 400,
+                        ease: 'Back.easeOut',
+                        onComplete: () => {
+                            this.scene.time.delayedCall(2000, () => {
+                                this.scene.tweens.add({
+                                    targets: msgText,
+                                    y: GAME_H + 50,
+                                    alpha: 0,
+                                    duration: 300,
+                                    onComplete: () => msgText.destroy()
+                                });
+                            });
+                        }
+                    });
+                }
+
+                // Reset answer
+                this.currentAnswer = '';
+                this.answerText.setText('___');
+                this.answerCursor.x = GAME_W/2 + 30;
+
+                // Update struggling queue
+                const mathProgress = gameState.mathProgress;
+                if (!mathProgress.struggling[problemKey]) {
+                    mathProgress.struggling[problemKey] = { wrong: 0, lastSeen: Date.now() };
+                }
+                mathProgress.struggling[problemKey].wrong++;
+                mathProgress.struggling[problemKey].lastSeen = Date.now();
+
+                // Reset math streak
+                this.mathStreak = 0;
+            }
+
+            showHintBubble() {
+                const hint = this.getHint();
+                
+                // Create hint bubble
+                this.hintBubble = this.scene.add.graphics();
+                this.hintBubble.setScrollFactor(0).setDepth(106);
+                
+                // Bubble background
+                this.hintBubble.fillStyle(0xffffcc);
+                this.hintBubble.fillRoundedRect(GAME_W/2 - 200, GAME_H/2 + 250, 400, 80, 12);
+                this.hintBubble.lineStyle(2, 0xffaa00);
+                this.hintBubble.strokeRoundedRect(GAME_W/2 - 200, GAME_H/2 + 250, 400, 80, 12);
+                
+                // Bubble tail
+                this.hintBubble.fillStyle(0xffffcc);
+                this.hintBubble.fillTriangle(GAME_W/2 - 10, GAME_H/2 + 250, GAME_W/2 + 10, GAME_H/2 + 250, GAME_W/2, GAME_H/2 + 235);
+
+                // Hint text
+                const hintText = this.scene.add.text(GAME_W/2, GAME_H/2 + 290, hint, {
+                    fontFamily: 'Nunito',
+                    fontSize: '16px',
+                    fontStyle: 'italic',
+                    fill: '#664400',
+                    align: 'center',
+                    wordWrap: { width: 380 }
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(107);
+
+                // Scale in animation
+                this.hintBubble.setScale(0);
+                hintText.setScale(0);
+                this.scene.tweens.add({
+                    targets: [this.hintBubble, hintText],
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 300,
+                    ease: 'Back.easeOut'
+                });
+
+                // Store references for cleanup
+                this.hintBubbleElements = [this.hintBubble, hintText];
+            }
+
+            getHint() {
+                const { a, b, op } = this.currentProblem;
+                
+                switch (op) {
+                    case '+':
+                        return `💡 Hint: Count up from ${a}... ${a}, ${a + 1}, ${a + 2}...`;
+                    case '-':
+                        return `💡 Hint: Start with ${a} and take away ${b}...`;
+                    case '×':
+                        if (a === b) {
+                            return `💡 Hint: ${a} × ${a} = ${a} squared!`;
+                        } else if (b <= 5) {
+                            return `💡 Hint: ${a} + ${a}` + (b > 2 ? ` + ${a}`.repeat(b - 2) : '') + '...';
+                        } else {
+                            return `💡 Hint: Think: ${a} × ${b - 1} = ${a * (b - 1)}, plus one more ${a}...`;
+                        }
+                    case '÷':
+                        return `💡 Hint: How many ${b}s fit into ${a}?`;
+                    default:
+                        return "💡 Think about it...";
+                }
+            }
+
+            endEncounter() {
+                this.isActive = false;
+                
+                // Clean up input
+                if (this.numberKeys) {
+                    this.numberKeys.forEach(key => key.destroy());
+                    this.numberKeys = null;
+                }
+                if (this.backspaceKey) {
+                    this.backspaceKey.destroy();
+                    this.backspaceKey = null;
+                }
+                if (this.enterKey) {
+                    this.enterKey.destroy();
+                    this.enterKey = null;
+                }
+
+                // Clean up all UI elements
+                const elementsToDestroy = [
+                    this.overlay, this.panelShadow, this.encounterPanel,
+                    this.monster, this.monsterAura, this.monsterName,
+                    this.problemText, this.questionPartText,
+                    this.answerText, this.answerBg, this.answerCursor,
+                    this.messageText, this.streakDisplay
+                ];
+                
+                elementsToDestroy.forEach(element => {
+                    if (element) element.destroy();
+                });
+                
+                // Clean up particles and effects
+                this.particleEmitters.forEach(particle => particle.destroy());
+                this.particleEmitters = [];
+                
+                // Clean up numpad buttons
+                this.numpadButtons.forEach(btn => {
+                    btn.button.destroy();
+                    btn.text.destroy();
+                    btn.hitArea.destroy();
+                });
+                this.numpadButtons = [];
+
+                // Clean up hint bubble
+                if (this.hintBubbleElements) {
+                    this.hintBubbleElements.forEach(element => element.destroy());
+                    this.hintBubbleElements = null;
+                }
+
+                // Update UI
+                this.scene.events.emit('updateUI');
+
+                // Reset player state
+                this.scene.player.play('hiro-idle-' + this.scene.facing);
+            }
+        }
+
+        // BootScene - Asset loading with fallbacks
+        class BootScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'BootScene' });
+                this._failedKeys = new Set();
+            }
+
+            preload() {
+                // Track failed loads
+                this.load.on('loaderror', (file) => {
+                    console.warn('Failed to load:', file.key);
+                    this._failedKeys.add(file.key);
+                });
+
+                // Base paths
+                const charPath = 'assets/Ninja Adventure - Asset Pack/Actor/Characters/';
+                const monsterPath = 'assets/Ninja Adventure - Asset Pack/Actor/Monsters/';
+                
+                // Player character (NinjaGreen with SeparateAnim)
+                this.load.spritesheet('hiro-walk', charPath + 'NinjaGreen/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('hiro-idle', charPath + 'NinjaGreen/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('hiro-attack', charPath + 'NinjaGreen/SeparateAnim/Attack.png', { frameWidth: 16, frameHeight: 16 });
+                
+                // NPCs (use SeparateAnim)
+                this.load.spritesheet('villager-walk', charPath + 'Villager/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('villager-idle', charPath + 'Villager/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('villager2-walk', charPath + 'Villager2/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('villager2-idle', charPath + 'Villager2/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('oldman-walk', charPath + 'OldMan/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('oldman-idle', charPath + 'OldMan/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('skeleton-walk', charPath + 'Skeleton/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('skeleton-idle', charPath + 'Skeleton/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
+                
+                // Monsters (single files, load as -walk only, will copy to -idle in create())
+                this.load.spritesheet('slime-walk', monsterPath + 'Slime/Slime.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('fish-walk', monsterPath + 'Fish/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('mushroom-walk', monsterPath + 'Mushroom/mushroom.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('larva-walk', monsterPath + 'Larva/Larva.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('lizard-walk', monsterPath + 'Lizard/Lizard.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('snake-walk', monsterPath + 'Snake/Snake.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('dragon-walk', monsterPath + 'Dragon/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+                
+                // Load tilesets
+                const tilesetPath = 'assets/Ninja Adventure - Asset Pack/Backgrounds/Tilesets/';
+                this.load.spritesheet('tileset-field', tilesetPath + 'TilesetField.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('tileset-nature', tilesetPath + 'TilesetNature.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('tileset-house', tilesetPath + 'TilesetHouse.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('tileset-water', tilesetPath + 'TilesetWater.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('tileset-desert', tilesetPath + 'TilesetDesert.png', { frameWidth: 16, frameHeight: 16 });
+                this.load.spritesheet('tileset-element', tilesetPath + 'TilesetElement.png', { frameWidth: 16, frameHeight: 16 });
+                
+                // Load particles
+                this.load.image('particle-grass', 'assets/Ninja Adventure - Asset Pack/FX/Particle/Grass.png');
+                this.load.image('particle-spark', 'assets/Ninja Adventure - Asset Pack/FX/Particle/Spark.png');
+                
+                // Load music for each world - using actual filenames
+                const musicPath = 'assets/Ninja Adventure - Asset Pack/Audio/Musics/';
+                this.load.audio('music-menu', [musicPath + '1 - Adventure Begin.ogg']);
+                this.load.audio('music-meadow', [musicPath + '5 - Peaceful.ogg']);
+                this.load.audio('music-riverside', [musicPath + '3 - Revelation.ogg']);
+                this.load.audio('music-bamboo', [musicPath + '37 - Dark Forest.ogg']);
+                this.load.audio('music-desert', [musicPath + '28 - Tension.ogg']);
+                this.load.audio('music-fortress', [musicPath + '10 - Dark Castle.ogg']);
+                
+                // Load sound effects
+                this.load.audio('sfx-coin', ['assets/Ninja Adventure - Asset Pack/Audio/Sounds/Bonus/Coin.wav']);
+                this.load.audio('sfx-slash', ['assets/Ninja Adventure - Asset Pack/Audio/Sounds/Bonus/Bonus2.wav']);
+                this.load.audio('sfx-portal', ['assets/Ninja Adventure - Asset Pack/Audio/Sounds/Bonus/Bonus3.wav']);
+            }
+
+            create() {
+                console.log('BootScene.create — failed keys:', [...this._failedKeys]);
+                
+                // Copy monster walk textures to idle (monsters use same file for both)
+                const monsterNames = ['slime', 'fish', 'mushroom', 'larva', 'lizard', 'snake', 'dragon'];
+                monsterNames.forEach(name => {
+                    try {
+                        if (!this._failedKeys.has(name + '-walk')) {
+                            const walkTex = this.textures.get(name + '-walk');
+                            if (walkTex && walkTex.key !== '__MISSING') {
+                                this.textures.addSpriteSheet(name + '-idle', walkTex.getSourceImage(), {frameWidth: 16, frameHeight: 16});
+                                console.log('Created', name + '-idle from walk');
+                            }
+                        }
+                    } catch(e) {
+                        console.warn('Failed to create idle for', name, e.message);
+                        this._failedKeys.add(name + '-idle');
+                    }
+                });
+                
+                // Create fallback textures (these are never loaded from files)
+                const g = this.make.graphics({x:0,y:0,add:false});
+                
+                g.fillStyle(0x3a8c3a).fillRect(0,0,16,16); g.generateTexture('grass-tile',16,16); g.clear();
+                g.fillStyle(0x8b7355).fillRect(0,0,16,16); g.generateTexture('dirt-tile',16,16); g.clear();
+                g.fillStyle(0x2a2a2a).fillRect(0,0,16,16); g.generateTexture('wall-tile',16,16); g.clear();
+                g.fillStyle(0x1a4a1a).fillRect(0,0,16,16).fillStyle(0x4a2c1a).fillRect(6,8,4,8); g.generateTexture('tree-tile',16,16); g.clear();
+                g.fillStyle(0x4a9c4a).fillRect(4,2,8,12); g.generateTexture('tall-grass',16,16); g.clear();
+                g.fillStyle(0xffd700).fillCircle(8,8,6); g.generateTexture('coin',16,16); g.clear();
+                g.fillStyle(0x4444ff).fillRect(0,0,16,16); g.generateTexture('water-tile',16,16); g.clear();
+                g.fillStyle(0xffdd44).fillRect(0,0,16,16); g.generateTexture('sand-tile',16,16); g.clear();
+                g.fillStyle(0x666666).fillRect(0,0,16,16); g.generateTexture('stone-tile',16,16); g.clear();
+                
+                // Portal texture
+                g.fillGradientStyle(0xff4444, 0xff4444, 0xff0000, 0xff0000, 1);
+                g.fillRect(0,0,16,16); g.generateTexture('portal-tile',16,16); g.clear();
+                
+                // Particle fallbacks (only if real ones failed)
+                if (this._failedKeys.has('particle-grass')) {
+                    g.fillStyle(0x4a9c4a).fillCircle(4,4,3); g.generateTexture('particle-grass',8,8); g.clear();
+                }
+                if (this._failedKeys.has('particle-spark')) {
+                    g.fillStyle(0xffff00).fillCircle(4,4,3); g.generateTexture('particle-spark',8,8); g.clear();
+                }
+                
+                // Character spritesheet fallbacks
+                this.createFallbackSprites(g);
+                
+                g.destroy();
+                
+                console.log('BootScene: textures ready, starting MenuScene');
+                this.scene.start('MenuScene');
+            }
+            
+            createFallbackSprites(g) {
+                const characters = ['hiro', 'villager', 'villager2', 'oldman', 'skeleton'];
+                const monsters = ['slime', 'fish', 'mushroom', 'larva', 'lizard', 'snake', 'dragon'];
+                
+                [...characters, ...monsters].forEach(sprite => {
+                    // Walk fallback (64x64, 4x4 frames)
+                    if (this._failedKeys.has(sprite + '-walk')) {
+                        g.clear();
+                        for (let row = 0; row < 4; row++) {
+                            for (let col = 0; col < 4; col++) {
+                                const color = sprite === 'hiro' ? 0x00ff00 : (characters.includes(sprite) ? 0x4444ff : 0xff4444);
+                                g.fillStyle(color).fillRect(col*16+4, row*16+4, 8, 8)
+                                 .fillStyle(0x000000).fillRect(col*16+6, row*16+5, 4, 2);
+                            }
+                        }
+                        g.generateTexture(sprite + '-walk-img', 64, 64); g.clear();
+                        this.textures.addSpriteSheet(sprite + '-walk',
+                            this.textures.get(sprite + '-walk-img').getSourceImage(),
+                            { frameWidth: 16, frameHeight: 16 });
+                    }
+                    
+                    // Idle fallback (64x16, 4 frames)
+                    if (this._failedKeys.has(sprite + '-idle')) {
+                        g.clear();
+                        for (let col = 0; col < 4; col++) {
+                            const color = sprite === 'hiro' ? 0x00ff00 : (characters.includes(sprite) ? 0x4444ff : 0xff4444);
+                            g.fillStyle(color).fillRect(col*16+4, 4, 8, 8)
+                             .fillStyle(0x000000).fillRect(col*16+6, 5, 4, 2);
+                        }
+                        g.generateTexture(sprite + '-idle-img', 64, 16); g.clear();
+                        this.textures.addSpriteSheet(sprite + '-idle',
+                            this.textures.get(sprite + '-idle-img').getSourceImage(),
+                            { frameWidth: 16, frameHeight: 16 });
+                    }
+                    
+                    // Attack fallback for hiro only
+                    if (sprite === 'hiro' && this._failedKeys.has('hiro-attack')) {
+                        g.clear();
+                        for (let col = 0; col < 4; col++) {
+                            g.fillStyle(0x00ff00).fillRect(col*16+4, 4, 8, 8)
+                             .fillStyle(0xffffff).fillRect(col*16+2, 2, 12, 2);
+                        }
+                        g.generateTexture('hiro-attack-img', 64, 16); g.clear();
+                        this.textures.addSpriteSheet('hiro-attack',
+                            this.textures.get('hiro-attack-img').getSourceImage(),
+                            { frameWidth: 16, frameHeight: 16 });
+                    }
+                });
+            }
+        }
+
+        // MenuScene - Title screen
+        class MenuScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'MenuScene' });
+            }
+
+            create() {
+                // Night sky background
+                this.add.rectangle(GAME_W/2, GAME_H/2, GAME_W, GAME_H, 0x0a0a2a);
+                
+                // Stars
+                for (let i = 0; i < 50; i++) {
+                    const star = this.add.circle(
+                        Phaser.Math.Between(0, GAME_W),
+                        Phaser.Math.Between(0, GAME_H/2),
+                        1, 0xffffff
+                    );
+                    this.tweens.add({
+                        targets: star,
+                        alpha: { from: 0.3, to: 1 },
+                        duration: Phaser.Math.Between(1000, 3000),
+                        yoyo: true,
+                        repeat: -1
+                    });
+                }
+                
+                // Mountain silhouettes
+                const mountains = this.add.graphics();
+                mountains.fillStyle(0x1a1a4a);
+                mountains.fillTriangle(0, GAME_H, 200, GAME_H/2, 400, GAME_H);
+                mountains.fillTriangle(300, GAME_H, 500, GAME_H/3, 700, GAME_H);
+                mountains.fillTriangle(600, GAME_H, 800, GAME_H/2.5, GAME_W, GAME_H);
+                
+                // Title
+                const titleText = this.add.text(GAME_W/2, GAME_H/3, 'CHOPMATH', {
+                    fontFamily: 'Nunito',
+                    fontSize: '64px',
+                    fontWeight: 'bold',
+                    fill: '#4a9c4a',
+                    stroke: '#1a4a1a',
+                    strokeThickness: 4
+                }).setOrigin(0.5);
+                
+                // Subtitle
+                this.add.text(GAME_W/2, GAME_H/3 + 60, 'Math Combat Adventure', {
+                    fontFamily: 'Nunito',
+                    fontSize: '24px',
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5);
+                
+                // Title bounce animation
+                this.tweens.add({
+                    targets: titleText,
+                    y: titleText.y - 10,
+                    duration: 2000,
+                    ease: 'Sine.easeInOut',
+                    yoyo: true,
+                    repeat: -1
+                });
+                
+                // Buttons
+                const startButton = this.add.text(GAME_W/2, GAME_H/2 + 50, 'START QUEST', {
+                    fontFamily: 'Nunito',
+                    fontSize: '32px',
+                    fontWeight: '600',
+                    fill: '#ffffff',
+                    backgroundColor: '#4a9c4a',
+                    padding: { x: 20, y: 10 }
+                }).setOrigin(0.5).setInteractive();
+                
+                const continueButton = this.add.text(GAME_W/2, GAME_H/2 + 120, 'CONTINUE', {
+                    fontFamily: 'Nunito',
+                    fontSize: '32px',
+                    fontWeight: '600',
+                    fill: '#ffffff',
+                    backgroundColor: '#8b7355',
+                    padding: { x: 20, y: 10 }
+                }).setOrigin(0.5).setInteractive();
+                
+                // Hiro preview with idle animation
+                const hiro = this.add.sprite(GAME_W/2, GAME_H - 100, 'hiro-idle', 0);
+                hiro.setScale(3);
+                
+                // Button interactions
+                startButton.on('pointerdown', () => {
+                    try {
+                        if (this.sound.get('music-menu')) {
+                            this.sound.get('music-menu').stop();
+                        }
+                    } catch (e) {}
+                    gameState.currentWorld = 'meadow';
+                    gameState.showTutorial = true;
+                    this.scene.start('WorldScene');
+                });
+                
+                continueButton.on('pointerdown', () => {
+                    try {
+                        if (this.sound.get('music-menu')) {
+                            this.sound.get('music-menu').stop();
+                        }
+                    } catch (e) {}
+                    gameState.showTutorial = false;
+                    this.scene.start('WorldScene');
+                });
+                
+                // Start menu music
+                try {
+                    const music = this.sound.add('music-menu', { loop: true, volume: 0.3 });
+                    music.play();
+                } catch (e) {
+                    console.log('Menu music failed to play');
+                }
+                
+                // Create animations here since they're global
+                this.createAnimations();
+            }
+            
+            createAnimations() {
+                const characters = ['hiro', 'villager', 'villager2', 'oldman', 'skeleton'];
+                const monsters = ['slime', 'fish', 'mushroom', 'larva', 'lizard', 'snake', 'dragon'];
+                
+                [...characters, ...monsters].forEach(sprite => {
+                    // Walk animations - columns are directions, rows are walk poses
+                    // Col 0=down, Col 1=up, Col 2=left, Col 3=right
+                    this.anims.create({
+                        key: sprite + '-walk-down',
+                        frames: [{key:sprite+'-walk',frame:0},{key:sprite+'-walk',frame:4},{key:sprite+'-walk',frame:8},{key:sprite+'-walk',frame:12}],
+                        frameRate: 8,
+                        repeat: -1
+                    });
+                    
+                    this.anims.create({
+                        key: sprite + '-walk-up',
+                        frames: [{key:sprite+'-walk',frame:1},{key:sprite+'-walk',frame:5},{key:sprite+'-walk',frame:9},{key:sprite+'-walk',frame:13}],
+                        frameRate: 8,
+                        repeat: -1
+                    });
+                    
+                    this.anims.create({
+                        key: sprite + '-walk-left',
+                        frames: [{key:sprite+'-walk',frame:2},{key:sprite+'-walk',frame:6},{key:sprite+'-walk',frame:10},{key:sprite+'-walk',frame:14}],
+                        frameRate: 8,
+                        repeat: -1
+                    });
+                    
+                    this.anims.create({
+                        key: sprite + '-walk-right',
+                        frames: [{key:sprite+'-walk',frame:3},{key:sprite+'-walk',frame:7},{key:sprite+'-walk',frame:11},{key:sprite+'-walk',frame:15}],
+                        frameRate: 8,
+                        repeat: -1
+                    });
+                    
+                    // Idle animations - one frame per direction (col: 0=down, 1=up, 2=left, 3=right)
+                    const dirMap = {down:0, up:1, left:2, right:3};
+                    Object.entries(dirMap).forEach(([dir, frame]) => {
+                        this.anims.create({
+                            key: sprite + '-idle-' + dir,
+                            frames: [{ key: sprite + '-idle', frame: frame }],
+                            frameRate: 1,
+                            repeat: 0
+                        });
+                    });
+                });
+                
+                // Attack animations - only for hiro
+                const dirMap = {down:0, up:1, left:2, right:3};
+                Object.entries(dirMap).forEach(([dir, frame]) => {
+                    this.anims.create({
+                        key: 'hiro-attack-' + dir,
+                        frames: [{ key: 'hiro-attack', frame: frame }],
+                        frameRate: 1,
+                        repeat: 0
+                    });
+                });
+            }
+        }
+
+        // WorldScene - Main gameplay
+        class WorldScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'WorldScene' });
+                this.player = null;
+                this.cursors = null;
+                this.wasd = null;
+                this.spaceKey = null;
+                this.facing = 'down';
+                this.isMoving = false;
+                this.isAttacking = false;
+                this.grassSprites = null;
+                this.coinSprites = null;
+                this.wallBodies = null;
+                this.npcs = null;
+                this.monsters = null;
+                this.portals = null;
+                this.currentWorldMusic = null;
+                this.worldNameText = null;
+                this.portalGlows = [];
+                this.portalArrows = [];
+                this.activeSpeechBubble = null;
+                this.signs = null;
+                this.mathEncounter = null;
+            }
+
+            create() {
+                this._transitioning = false;
+                try {
+                    console.log('WorldScene.create START - World:', gameState.currentWorld);
+                    
+                    // Reset grass cut counter when entering world
+                    gameState.grassCut = 0;
+                    
+                    // Initialize math encounter manager
+                    this.mathEncounter = new MathEncounterManager(this);
+                    
+                    this.createWorld();
+                    console.log('WorldScene: world created');
+                    this.createPlayer();
+                    console.log('WorldScene: player created');
+                    this.setupCamera();
+                    console.log('WorldScene: camera set up');
+                    this.setupInput();
+                    console.log('WorldScene: input set up');
+                    this.scene.launch('UIScene');
+                    console.log('WorldScene: UI launched');
+                    this.displayWorldName();
+                    
+                    // Show tutorial on first world
+                    if (gameState.currentWorld === 'meadow' && gameState.showTutorial) {
+                        this.showTutorial();
+                        gameState.showTutorial = false;
+                    }
+                    
+                } catch (e) {
+                    console.error('WorldScene.create FAILED:', e);
+                }
+                
+                // Start world-specific music
+                this.startWorldMusic();
+                
+                // Fade in
+                this.cameras.main.fadeIn(1000);
+                
+                // Update portal states initially
+                this.updatePortalStates();
+            }
+            
+            createWorld() {
+                const world = WORLDS[gameState.currentWorld];
+                
+                // Create groups
+                this.grassSprites = this.add.group();
+                this.coinSprites = this.physics.add.group();
+                this.wallBodies = this.physics.add.staticGroup();
+                this.npcs = this.add.group();
+                this.monsters = this.physics.add.group();
+                this.portals = this.physics.add.staticGroup();
+                this.signs = this.add.group();
+                
+                // Create world tiles
+                this.createWorldTerrain(world);
+                
+                // Add world-specific structures
+                this.createWorldStructures(world);
+                
+                // Add NPCs
+                this.createWorldNPCs(world);
+                
+                // Add monsters
+                this.createWorldMonsters(world);
+                
+                // Add portals
+                this.createWorldPortals(world);
+                
+                // Add decorative elements
+                this.createWorldDecorations(world);
+                
+                // World atmosphere - add a subtle tint overlay if not default
+                if (world.tint && world.tint !== 0xffffff) {
+                    const tintOverlay = this.add.rectangle(
+                        world.size.width * TILE / 2, world.size.height * TILE / 2,
+                        world.size.width * TILE, world.size.height * TILE,
+                        world.tint, 0.15
+                    );
+                    tintOverlay.setDepth(8); // Below player (10) and NPCs
+                }
+            }
+            
+            createWorldTerrain(world) {
+                const { width, height } = world.size;
+                
+                // Build set of portal tile positions (and neighbors) to skip wall collision
+                const portalTiles = new Set();
+                world.portals.forEach(p => {
+                    for (let dy = -2; dy <= 2; dy++) {
+                        portalTiles.add(`${p.x},${p.y + dy}`);
+                    }
+                });
+                
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        const worldX = x * TILE;
+                        const worldY = y * TILE;
+                        
+                        // Wall tiles on edges
+                        if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+                            const isPortalArea = portalTiles.has(`${x},${y}`);
+                            this.createWallTile(worldX, worldY, world, isPortalArea);
+                        } else {
+                            this.createTerrainTile(worldX, worldY, world, x, y);
+                        }
+                    }
+                }
+            }
+            
+            createWallTile(worldX, worldY, world, skipCollision) {
+                let tileTexture = 'wall-tile';
+                
+                // World-specific wall textures
+                switch (world.key) {
+                    case 'riverside':
+                        if (Math.random() < 0.3) tileTexture = 'water-tile';
+                        break;
+                    case 'desert':
+                        tileTexture = 'sand-tile';
+                        break;
+                    case 'fortress':
+                        tileTexture = 'stone-tile';
+                        break;
+                }
+                
+                this.add.image(worldX, worldY, tileTexture).setOrigin(0);
+                
+                // Add collision unless it's water or a portal area
+                if (tileTexture !== 'water-tile' && !skipCollision) {
+                    const wallBody = this.physics.add.staticSprite(worldX + 8, worldY + 8, null);
+                    wallBody.body.setSize(16, 16);
+                    wallBody.setVisible(false);
+                    this.wallBodies.add(wallBody);
+                }
+            }
+            
+            createTerrainTile(worldX, worldY, world, x, y) {
+                let baseTexture = 'grass-tile';
+                let canHaveGrass = true;
+                
+                // World-specific terrain
+                switch (world.key) {
+                    case 'meadow':
+                        // Dirt paths
+                        if ((y >= world.size.height/2 - 2 && y <= world.size.height/2 + 1) || 
+                            (x >= world.size.width/2 - 2 && x <= world.size.width/2 + 1)) {
+                            baseTexture = 'dirt-tile';
+                            canHaveGrass = false;
+                        }
+                        break;
+                        
+                    case 'riverside':
+                        if (y < 8 || (x > 30 && y < 15)) {
+                            baseTexture = 'water-tile';
+                            canHaveGrass = false;
+                            // Add water collision
+                            const waterBody = this.physics.add.staticSprite(worldX + 8, worldY + 8, null);
+                            waterBody.body.setSize(16, 16);
+                            waterBody.setVisible(false);
+                            this.wallBodies.add(waterBody);
+                        } else if (y < 12) {
+                            baseTexture = 'sand-tile';
+                            canHaveGrass = Math.random() < 0.3;
+                        }
+                        break;
+                        
+                    case 'bamboo':
+                        canHaveGrass = Math.random() < 0.6; // More dense vegetation
+                        break;
+                        
+                    case 'desert':
+                        baseTexture = 'sand-tile';
+                        canHaveGrass = Math.random() < 0.15; // Sparse oasis grass
+                        break;
+                        
+                    case 'fortress':
+                        baseTexture = 'stone-tile';
+                        canHaveGrass = Math.random() < 0.1; // Very little grass
+                        break;
+                }
+                
+                this.add.image(worldX, worldY, baseTexture).setOrigin(0);
+                
+                // Add tall grass
+                if (canHaveGrass && Math.random() < 0.4) {
+                    const tallGrass = this.add.image(worldX, worldY, 'tall-grass').setOrigin(0);
+                    tallGrass.setData('cuttable', true);
+                    this.grassSprites.add(tallGrass);
+                }
+            }
+            
+            createWorldDecorations(world) {
+                const { width, height } = world.size;
+                
+                // Build exclusion zones around NPCs, portals, structures
+                const exclusionZones = new Set();
+                world.npcs.forEach(n => {
+                    for (let dx = -3; dx <= 3; dx++)
+                        for (let dy = -3; dy <= 3; dy++)
+                            exclusionZones.add(`${n.x+dx},${n.y+dy}`);
+                });
+                world.portals.forEach(p => {
+                    for (let dx = -3; dx <= 3; dx++)
+                        for (let dy = -3; dy <= 3; dy++)
+                            exclusionZones.add(`${p.x+dx},${p.y+dy}`);
+                });
+                world.structures.forEach(s => {
+                    const sw = s.width || 3;
+                    const sh = s.height || 3;
+                    for (let dx = -2; dx <= sw + 1; dx++)
+                        for (let dy = -2; dy <= sh + 1; dy++)
+                            exclusionZones.add(`${s.x+dx},${s.y+dy}`);
+                });
+                
+                // Add decorative elements based on world type
+                for (let x = 1; x < width - 1; x++) {
+                    for (let y = 1; y < height - 1; y++) {
+                        if (exclusionZones.has(`${x},${y}`)) continue;
+                        const worldX = x * TILE;
+                        const worldY = y * TILE;
+                        
+                        // Skip if there's a structure here
+                        const hasStructure = world.structures.some(s => 
+                            x >= s.x && x < s.x + (s.width || 1) && 
+                            y >= s.y && y < s.y + (s.height || 1)
+                        );
+                        
+                        if (hasStructure) continue;
+                        
+                        // Add decorations based on world type
+                        switch (world.key) {
+                            case 'meadow':
+                                // Flowers
+                                if (Math.random() < 0.05) {
+                                    const flowerColor = Phaser.Utils.Array.GetRandom([0xff69b4, 0xffff00, 0xff4500, 0x9370db]);
+                                    this.add.circle(worldX + 8, worldY + 8, 2, flowerColor).setDepth(1);
+                                }
+                                // Trees (with collision)
+                                if (Math.random() < 0.06) {
+                                    this.addTree(worldX, worldY);
+                                }
+                                break;
+                                
+                            case 'riverside':
+                                // Reeds near water
+                                if (y < 15 && Math.random() < 0.1) {
+                                    this.add.rectangle(worldX + 8, worldY + 8, 2, 12, 0x228b22).setDepth(1);
+                                }
+                                // Rocks
+                                if (Math.random() < 0.04) {
+                                    this.add.circle(worldX + 8, worldY + 8, 4, 0x696969).setDepth(1);
+                                }
+                                break;
+                                
+                            case 'bamboo':
+                                // Dense trees (with collision)
+                                if (Math.random() < 0.10) {
+                                    this.addTree(worldX, worldY);
+                                }
+                                // Mushroom patches
+                                if (Math.random() < 0.06) {
+                                    this.add.circle(worldX + 6, worldY + 10, 3, 0xcd853f).setDepth(1);
+                                    this.add.circle(worldX + 6, worldY + 8, 2, 0xff6347).setDepth(1);
+                                }
+                                break;
+                                
+                            case 'desert':
+                                // Cacti
+                                if (Math.random() < 0.05) {
+                                    this.add.rectangle(worldX + 8, worldY + 8, 4, 10, 0x228b22).setDepth(1);
+                                    this.add.rectangle(worldX + 8, worldY + 6, 6, 2, 0x228b22).setDepth(1);
+                                }
+                                // Rocks
+                                if (Math.random() < 0.06) {
+                                    this.add.circle(worldX + 8, worldY + 8, 5, 0x8b4513).setDepth(1);
+                                }
+                                break;
+                                
+                            case 'fortress':
+                                // Debris
+                                if (Math.random() < 0.04) {
+                                    this.add.rectangle(worldX + 8, worldY + 8, 6, 4, 0x2f4f4f).setDepth(1);
+                                }
+                                // Torches
+                                if (Math.random() < 0.02) {
+                                    this.add.rectangle(worldX + 8, worldY + 8, 2, 8, 0x8b4513).setDepth(1);
+                                    this.add.circle(worldX + 8, worldY + 4, 3, 0xff4500).setDepth(1);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            
+            createWorldStructures(world) {
+                world.structures.forEach(structure => {
+                    const worldX = structure.x * TILE;
+                    const worldY = structure.y * TILE;
+                    
+                    switch (structure.type) {
+                        case 'house':
+                            this.createHouse(worldX, worldY, structure.width, structure.height);
+                            break;
+                        case 'well':
+                            this.createWell(worldX, worldY);
+                            break;
+                        case 'fence':
+                            this.createFence(worldX, worldY, structure.length, structure.direction);
+                            break;
+                        case 'bridge':
+                            this.createBridge(worldX, worldY, structure.direction);
+                            break;
+                        default:
+                            // Other structure types - simplified for now
+                            this.add.rectangle(worldX + 8, worldY + 8, 16, 16, 0x8b4513).setOrigin(0.5);
+                            break;
+                    }
+                });
+            }
+            
+            createHouse(worldX, worldY, width, height) {
+                // Create a proper-looking house with roof, walls, and door
+                for (let i = 0; i < width; i++) {
+                    for (let j = 0; j < height; j++) {
+                        const tileX = worldX + i * TILE;
+                        const tileY = worldY + j * TILE;
+                        
+                        if (j === 0) {
+                            // Roof - brown
+                            this.add.rectangle(tileX + 8, tileY + 8, 16, 16, 0x8B4513).setOrigin(0.5).setDepth(2);
+                        } else if (j === height - 1) {
+                            // Bottom row - walls with door
+                            if (i === Math.floor(width / 2)) {
+                                // Door - dark opening
+                                this.add.rectangle(tileX + 8, tileY + 8, 16, 16, 0xD2B48C).setOrigin(0.5).setDepth(2);
+                                this.add.rectangle(tileX + 8, tileY + 8, 10, 14, 0x2F4F4F).setOrigin(0.5).setDepth(3);
+                            } else {
+                                // Wall
+                                this.add.rectangle(tileX + 8, tileY + 8, 16, 16, 0xD2B48C).setOrigin(0.5).setDepth(2);
+                            }
+                        } else {
+                            // Middle rows - walls
+                            this.add.rectangle(tileX + 8, tileY + 8, 16, 16, 0xD2B48C).setOrigin(0.5).setDepth(2);
+                        }
+                        
+                        // Add collision for all tiles
+                        const wallBody = this.physics.add.staticSprite(tileX + 8, tileY + 8, null);
+                        wallBody.body.setSize(16, 16);
+                        wallBody.setVisible(false);
+                        this.wallBodies.add(wallBody);
+                    }
+                }
+                
+                // Add chimney on larger houses
+                if (width >= 3 && height >= 3) {
+                    const chimneyX = worldX + (width - 1) * TILE;
+                    const chimneyY = worldY - TILE/2;
+                    this.add.rectangle(chimneyX + 8, chimneyY + 8, 8, 12, 0x696969).setOrigin(0.5).setDepth(4);
+                }
+            }
+            
+            createWell(worldX, worldY) {
+                // Create a proper stone well instead of grey circle
+                const centerX = worldX + 8;
+                const centerY = worldY + 8;
+                
+                // Stone base
+                this.add.circle(centerX, centerY, 8, 0x708090).setDepth(2);
+                // Inner dark water
+                this.add.circle(centerX, centerY, 5, 0x191970).setDepth(3);
+                // Stone rim
+                this.add.circle(centerX, centerY, 8, 0x708090, 0).setStrokeStyle(2, 0x2F4F4F).setDepth(4);
+                
+                // Well roof structure
+                this.add.rectangle(centerX, centerY - 6, 2, 12, 0x8B4513).setOrigin(0.5).setDepth(3); // Left post
+                this.add.rectangle(centerX, centerY - 6, 2, 12, 0x8B4513).setOrigin(0.5).setDepth(3); // Right post  
+                this.add.rectangle(centerX, centerY - 12, 16, 4, 0x8B4513).setOrigin(0.5).setDepth(3); // Roof beam
+                
+                // Add collision
+                const wallBody = this.physics.add.staticSprite(centerX, centerY, null);
+                wallBody.body.setSize(16, 16);
+                wallBody.setVisible(false);
+                this.wallBodies.add(wallBody);
+            }
+            
+            createFence(worldX, worldY, length, direction) {
+                for (let i = 0; i < length; i++) {
+                    const tileX = direction === 'horizontal' ? worldX + i * TILE : worldX;
+                    const tileY = direction === 'horizontal' ? worldY : worldY + i * TILE;
+                    
+                    // Create proper fence posts and rails
+                    const centerX = tileX + 8;
+                    const centerY = tileY + 8;
+                    
+                    if (direction === 'horizontal') {
+                        // Horizontal fence
+                        this.add.rectangle(centerX, centerY - 2, 16, 3, 0x8B4513).setOrigin(0.5).setDepth(2); // Top rail
+                        this.add.rectangle(centerX, centerY + 2, 16, 3, 0x8B4513).setOrigin(0.5).setDepth(2); // Bottom rail
+                        if (i % 2 === 0) { // Posts every other tile
+                            this.add.rectangle(centerX, centerY, 3, 12, 0x654321).setOrigin(0.5).setDepth(3);
+                        }
+                    } else {
+                        // Vertical fence
+                        this.add.rectangle(centerX - 2, centerY, 3, 16, 0x8B4513).setOrigin(0.5).setDepth(2); // Left rail
+                        this.add.rectangle(centerX + 2, centerY, 3, 16, 0x8B4513).setOrigin(0.5).setDepth(2); // Right rail
+                        if (i % 2 === 0) { // Posts every other tile
+                            this.add.rectangle(centerX, centerY, 12, 3, 0x654321).setOrigin(0.5).setDepth(3);
+                        }
+                    }
+                    
+                    const wallBody = this.physics.add.staticSprite(centerX, centerY, null);
+                    wallBody.body.setSize(16, 16);
+                    wallBody.setVisible(false);
+                    this.wallBodies.add(wallBody);
+                }
+            }
+            
+            createBridge(worldX, worldY, direction) {
+                const length = direction === 'horizontal' ? 4 : 3;
+                for (let i = 0; i < length; i++) {
+                    const tileX = direction === 'horizontal' ? worldX + i * TILE : worldX;
+                    const tileY = direction === 'horizontal' ? worldY : worldY + i * TILE;
+                    
+                    // Wooden bridge planks
+                    this.add.rectangle(tileX + 8, tileY + 8, 16, 16, 0x654321).setOrigin(0.5).setDepth(2);
+                    
+                    // Bridge supports
+                    if (direction === 'horizontal') {
+                        this.add.rectangle(tileX + 8, tileY + 12, 14, 2, 0x8B4513).setOrigin(0.5).setDepth(3);
+                        this.add.rectangle(tileX + 8, tileY + 4, 14, 2, 0x8B4513).setOrigin(0.5).setDepth(3);
+                    } else {
+                        this.add.rectangle(tileX + 4, tileY + 8, 2, 14, 0x8B4513).setOrigin(0.5).setDepth(3);
+                        this.add.rectangle(tileX + 12, tileY + 8, 2, 14, 0x8B4513).setOrigin(0.5).setDepth(3);
+                    }
+                }
+            }
+            
+            addTree(worldX, worldY) {
+                this.add.image(worldX, worldY, 'tree-tile').setOrigin(0).setDepth(2);
+                const wallBody = this.physics.add.staticSprite(worldX + 8, worldY + 8, null);
+                wallBody.body.setSize(16, 16);
+                wallBody.setVisible(false);
+                this.wallBodies.add(wallBody);
+            }
+            
+            createWorldNPCs(world) {
+                world.npcs.forEach(npcData => {
+                    const worldX = npcData.x * TILE + 8;
+                    const worldY = npcData.y * TILE + 8;
+                    
+                    const npc = this.add.sprite(worldX, worldY, npcData.sprite + '-idle', 0);
+                    npc.play(npcData.sprite + '-idle-down');
+                    npc.setDepth(5); // Above terrain and decorations
+                    npc.setData('name', npcData.name);
+                    npc.setData('dialogue', npcData.dialogue);
+                    
+                    // Name label above NPC
+                    const label = this.add.text(worldX, worldY - 12, npcData.name, {
+                        fontSize: '7px',
+                        fill: '#ffffff',
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5).setDepth(6);
+                    
+                    this.npcs.add(npc);
+                });
+            }
+            
+            createWorldMonsters(world) {
+                world.monsters.forEach(monsterData => {
+                    const worldX = monsterData.x * TILE + 8;
+                    const worldY = monsterData.y * TILE + 8;
+                    
+                    const monster = this.physics.add.sprite(worldX, worldY, monsterData.sprite + '-idle', 0);
+                    monster.play(monsterData.sprite + '-idle-down');
+                    monster.setData('name', monsterData.name);
+                    monster.setData('sprite', monsterData.sprite);
+                    monster.setData('facing', 'down');
+                    monster.setData('moveTimer', 0);
+                    monster.setData('pauseTimer', 0);
+                    monster.body.setSize(12, 12);
+                    monster.body.setOffset(2, 2);
+                    
+                    // Monster collision with walls but not player
+                    this.physics.add.collider(monster, this.wallBodies);
+                    
+                    this.monsters.add(monster);
+                });
+            }
+            
+            createWorldPortals(world) {
+                world.portals.forEach((portalData, index) => {
+                    const worldX = portalData.x * TILE;
+                    const worldY = portalData.y * TILE;
+                    
+                    // Visual glow (starts red/locked)
+                    const glow = this.add.rectangle(worldX + 8, worldY + 8, 16, 16, 0xff4444);
+                    glow.setAlpha(0.7);
+                    
+                    // Store reference for updating
+                    this.portalGlows[index] = glow;
+                    
+                    // Floating arrow indicator (initially hidden)
+                    const arrow = this.add.text(worldX + 8, worldY - 10, '↓', {
+                        fontSize: '16px',
+                        fill: '#ffff00',
+                        fontWeight: 'bold'
+                    }).setOrigin(0.5);
+                    arrow.setVisible(false);
+                    this.portalArrows[index] = arrow;
+                    
+                    // Animate the glow
+                    this.tweens.add({
+                        targets: glow,
+                        alpha: { from: 0.5, to: 1 },
+                        duration: 1000,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                    
+                    // Animate the arrow
+                    this.tweens.add({
+                        targets: arrow,
+                        y: worldY - 15,
+                        duration: 800,
+                        yoyo: true,
+                        repeat: -1,
+                        ease: 'Sine.easeInOut'
+                    });
+                    
+                    // Physics body for overlap detection (3 tiles tall for easier entry)
+                    for (let dy = -1; dy <= 1; dy++) {
+                        const portal = this.physics.add.staticSprite(worldX + 8, worldY + 8 + dy * TILE, null);
+                        portal.body.setSize(16, 16);
+                        portal.setVisible(false);
+                        portal.setData('target', portalData.target);
+                        portal.setData('spawnX', portalData.spawnX);
+                        portal.setData('spawnY', portalData.spawnY);
+                        portal.setData('index', index);
+                        this.portals.add(portal);
+                    }
+                    
+                    // Extra glow tiles for visual
+                    for (let dy of [-1, 1]) {
+                        const extraGlow = this.add.rectangle(worldX + 8, worldY + 8 + dy * TILE, 16, 16, 0xff4444);
+                        extraGlow.setAlpha(0.4);
+                    }
+                    
+                    // Create sign near portal
+                    this.createPortalSign(worldX, worldY, portalData.sign);
+                });
+            }
+            
+            createPortalSign(worldX, worldY, signText) {
+                // Find a good position for the sign
+                const signOffsets = [
+                    { x: -24, y: 0 }, // Left
+                    { x: 24, y: 0 },  // Right
+                    { x: 0, y: -24 }, // Up
+                    { x: 0, y: 24 }   // Down
+                ];
+                
+                const offset = signOffsets[Math.floor(Math.random() * signOffsets.length)];
+                const signX = worldX + 8 + offset.x;
+                const signY = worldY + 8 + offset.y;
+                
+                // Sign post
+                this.add.rectangle(signX, signY + 4, 3, 12, 0x8B4513).setOrigin(0.5).setDepth(2);
+                
+                // Sign board
+                const signBoard = this.add.rectangle(signX, signY - 4, 32, 12, 0xDEB887).setOrigin(0.5).setDepth(3);
+                signBoard.setStrokeStyle(2, 0x8B4513);
+                
+                // Sign text
+                this.add.text(signX, signY - 4, signText, {
+                    fontSize: '8px',
+                    fill: '#000000',
+                    fontWeight: 'bold'
+                }).setOrigin(0.5).setDepth(4);
+            }
+            
+            updatePortalStates() {
+                const world = WORLDS[gameState.currentWorld];
+                const grassRequired = world.grassRequired;
+                const isQuestComplete = gameState.grassCut >= grassRequired;
+                
+                world.portals.forEach((portalData, index) => {
+                    const glow = this.portalGlows[index];
+                    const arrow = this.portalArrows[index];
+                    
+                    if (glow) {
+                        if (isQuestComplete) {
+                            // Green and unlocked
+                            glow.setFillStyle(0x00ff00);
+                            if (arrow) arrow.setVisible(true);
+                        } else {
+                            // Red and locked
+                            glow.setFillStyle(0xff4444);
+                            if (arrow) arrow.setVisible(false);
+                        }
+                    }
+                });
+            }
+            
+            createPlayer() {
+                const world = WORLDS[gameState.currentWorld];
+                let startX = Math.floor(world.size.width / 2) * TILE;
+                let startY = Math.floor(world.size.height / 2) * TILE;
+                
+                // If we have spawn coordinates from a portal, use those
+                if (gameState.spawnX !== undefined && gameState.spawnY !== undefined) {
+                    startX = gameState.spawnX * TILE;
+                    startY = gameState.spawnY * TILE;
+                    delete gameState.spawnX;
+                    delete gameState.spawnY;
+                }
+                
+                this.player = this.physics.add.sprite(startX, startY, 'hiro-idle');
+                this.player.setDepth(10); // Always on top of terrain/structures
+                this.player.body.setSize(12, 12);
+                this.player.body.setOffset(2, 4);
+                
+                // Player physics
+                this.player.body.setDrag(300);
+                this.player.body.setMaxVelocity(120, 120);
+                
+                // Collisions
+                this.physics.add.collider(this.player, this.wallBodies);
+                this.physics.add.overlap(this.player, this.coinSprites, this.collectCoin, null, this);
+                this.physics.add.overlap(this.player, this.portals, (p, portal) => this.enterPortal(p, portal), null, this);
+                
+                // Start idle animation
+                this.player.play('hiro-idle-down');
+            }
+            
+            setupCamera() {
+                const world = WORLDS[gameState.currentWorld];
+                this.cameras.main.setZoom(ZOOM);
+                this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+                this.cameras.main.setDeadzone(40, 40);
+                this.cameras.main.setBounds(0, 0, world.size.width * TILE, world.size.height * TILE);
+            }
+            
+            setupInput() {
+                this.cursors = this.input.keyboard.createCursorKeys();
+                this.wasd = this.input.keyboard.addKeys('W,S,A,D');
+                this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            }
+            
+            startWorldMusic() {
+                const world = WORLDS[gameState.currentWorld];
+                
+                // Stop current music
+                if (this.currentWorldMusic) {
+                    this.currentWorldMusic.stop();
+                }
+                
+                // Start new music
+                try {
+                    this.currentWorldMusic = this.sound.add(world.music, { loop: true, volume: 0.2 });
+                    this.currentWorldMusic.play();
+                } catch (e) {
+                    console.log('World music failed to play:', world.music);
+                }
+            }
+            
+            displayWorldName() {
+                const world = WORLDS[gameState.currentWorld];
+                
+                this.worldNameText = this.add.text(GAME_W/2/ZOOM, 60/ZOOM, `~ ${world.name} ~`, {
+                    fontFamily: 'Nunito',
+                    fontSize: `${32/ZOOM}px`,
+                    fontWeight: 'bold',
+                    fill: '#ffffff',
+                    stroke: '#000000',
+                    strokeThickness: 4/ZOOM
+                }).setOrigin(0.5).setScrollFactor(0);
+                
+                // Fade in and out
+                this.worldNameText.setAlpha(0);
+                this.tweens.add({
+                    targets: this.worldNameText,
+                    alpha: 1,
+                    duration: 1000,
+                    yoyo: true,
+                    delay: 1000,
+                    onComplete: () => {
+                        this.worldNameText.destroy();
+                    }
+                });
+            }
+            
+            showTutorial() {
+                const tutorialText = this.add.text(GAME_W/2/ZOOM, 100/ZOOM, 'Press SPACE to slash grass!\nSolve math problems when they appear!\nCollect coins and complete your quest!', {
+                    fontFamily: 'Nunito',
+                    fontSize: `${18/ZOOM}px`,
+                    fontWeight: 'bold',
+                    fill: '#ffff00',
+                    stroke: '#000000',
+                    strokeThickness: 3/ZOOM,
+                    align: 'center'
+                }).setOrigin(0.5).setScrollFactor(0);
+                
+                // Fade in and out
+                tutorialText.setAlpha(0);
+                this.tweens.add({
+                    targets: tutorialText,
+                    alpha: 1,
+                    duration: 1000,
+                    hold: 4000,
+                    yoyo: true,
+                    onComplete: () => {
+                        tutorialText.destroy();
+                    }
+                });
+            }
+            
+            getNearbyNPC() {
+                let nearestNPC = null;
+                let nearestDistance = Phaser.Math.MAX_VALUE;
+                
+                if (this.npcs.children.entries.length === 0) {
+                    console.warn('No NPCs in scene!');
+                }
+                
+                this.npcs.children.entries.forEach(npc => {
+                    const distance = Phaser.Math.Distance.Between(
+                        this.player.x, this.player.y, npc.x, npc.y
+                    );
+                    
+                    if (distance < 3 * TILE && distance < nearestDistance) {
+                        nearestNPC = npc;
+                        nearestDistance = distance;
+                    }
+                });
+                
+                return nearestNPC;
+            }
+            
+            showDialogue(npc) {
+                // Remove existing dialogue
+                if (this.activeSpeechBubble) {
+                    this.activeSpeechBubble.forEach(element => element.destroy());
+                }
+                
+                const dialogue = npc.getData('dialogue');
+                if (!dialogue) return;
+                
+                // Create speech bubble background
+                const bubbleWidth = Math.min(200, dialogue.length * 6 + 20);
+                const bubbleHeight = 50;
+                const bubbleX = npc.x;
+                const bubbleY = npc.y - 30;
+                
+                // Rounded rectangle background
+                const graphics = this.add.graphics();
+                graphics.setDepth(50);
+                graphics.fillStyle(0xffffff);
+                graphics.fillRoundedRect(bubbleX - bubbleWidth/2, bubbleY - bubbleHeight/2, bubbleWidth, bubbleHeight, 8);
+                graphics.lineStyle(2, 0x000000);
+                graphics.strokeRoundedRect(bubbleX - bubbleWidth/2, bubbleY - bubbleHeight/2, bubbleWidth, bubbleHeight, 8);
+                
+                // Speech bubble tail
+                graphics.fillStyle(0xffffff);
+                graphics.fillTriangle(
+                    bubbleX - 5, bubbleY + bubbleHeight/2,
+                    bubbleX + 5, bubbleY + bubbleHeight/2,
+                    bubbleX, bubbleY + bubbleHeight/2 + 10
+                );
+                graphics.lineStyle(2, 0x000000);
+                graphics.strokeTriangle(
+                    bubbleX - 5, bubbleY + bubbleHeight/2,
+                    bubbleX + 5, bubbleY + bubbleHeight/2,
+                    bubbleX, bubbleY + bubbleHeight/2 + 10
+                );
+                
+                // Dialogue text
+                const text = this.add.text(bubbleX, bubbleY, dialogue, {
+                    fontFamily: 'Nunito',
+                    fontSize: '12px',
+                    fill: '#000000',
+                    align: 'center',
+                    wordWrap: { width: bubbleWidth - 20 }
+                }).setOrigin(0.5).setDepth(51);
+                
+                // Store references
+                this.activeSpeechBubble = [graphics, text];
+                
+                // Auto-remove after 3 seconds
+                this.time.delayedCall(3000, () => {
+                    if (this.activeSpeechBubble) {
+                        this.activeSpeechBubble.forEach(element => element.destroy());
+                        this.activeSpeechBubble = null;
+                    }
+                });
+            }
+            
+            update() {
+                if (!this.player) return;
+                
+                // Don't process normal input during math encounter
+                if (this.mathEncounter && this.mathEncounter.isActive) {
+                    return;
+                }
+                
+                // Update monsters
+                this.updateMonsters();
+                
+                // Check NPC interaction
+                if (Phaser.Input.Keyboard.JustDown(this.spaceKey) && !this.isAttacking) {
+                    const nearNPC = this.getNearbyNPC();
+                    if (nearNPC) {
+                        this.showDialogue(nearNPC);
+                        return; // don't attack
+                    }
+                    this.attack();
+                    return;
+                }
+                
+                if (this.isAttacking) return;
+                
+                // Handle movement
+                let velocityX = 0;
+                let velocityY = 0;
+                this.isMoving = false;
+                
+                if (this.wasd.A.isDown || this.cursors.left.isDown) {
+                    velocityX = -120;
+                    this.facing = 'left';
+                    this.isMoving = true;
+                } else if (this.wasd.D.isDown || this.cursors.right.isDown) {
+                    velocityX = 120;
+                    this.facing = 'right';
+                    this.isMoving = true;
+                }
+                
+                if (this.wasd.W.isDown || this.cursors.up.isDown) {
+                    velocityY = -120;
+                    this.facing = 'up';
+                    this.isMoving = true;
+                } else if (this.wasd.S.isDown || this.cursors.down.isDown) {
+                    velocityY = 120;
+                    this.facing = 'down';
+                    this.isMoving = true;
+                }
+                
+                // Apply velocity
+                this.player.setVelocity(velocityX, velocityY);
+                
+                // Handle animations
+                const curKey = this.player.anims.currentAnim ? this.player.anims.currentAnim.key : '';
+                if (this.isMoving) {
+                    const animKey = 'hiro-walk-' + this.facing;
+                    if (curKey !== animKey) {
+                        this.player.play(animKey, true);
+                    }
+                } else {
+                    const idleKey = 'hiro-idle-' + this.facing;
+                    if (curKey !== idleKey) {
+                        this.player.play(idleKey);
+                    }
+                }
+            }
+            
+            updateMonsters() {
+                this.monsters.children.entries.forEach(monster => {
+                    const moveTimer = monster.getData('moveTimer') - 1;
+                    const pauseTimer = monster.getData('pauseTimer') - 1;
+                    
+                    monster.setData('moveTimer', moveTimer);
+                    monster.setData('pauseTimer', pauseTimer);
+                    
+                    if (pauseTimer > 0) {
+                        // Pausing - show idle animation
+                        monster.setVelocity(0, 0);
+                        const facing = monster.getData('facing');
+                        const sprite = monster.getData('sprite');
+                        const currentKey = monster.anims.currentAnim ? monster.anims.currentAnim.key : '';
+                        const idleKey = sprite + '-idle-' + facing;
+                        if (currentKey !== idleKey) {
+                            monster.play(idleKey);
+                        }
+                    } else if (moveTimer > 0) {
+                        // Continue moving in current direction
+                        const facing = monster.getData('facing');
+                        const sprite = monster.getData('sprite');
+                        const currentKey = monster.anims.currentAnim ? monster.anims.currentAnim.key : '';
+                        const walkKey = sprite + '-walk-' + facing;
+                        if (currentKey !== walkKey) {
+                            monster.play(walkKey, true);
+                        }
+                        
+                        // Apply movement
+                        let vx = 0, vy = 0;
+                        const speed = 30;
+                        switch (facing) {
+                            case 'up': vy = -speed; break;
+                            case 'down': vy = speed; break;
+                            case 'left': vx = -speed; break;
+                            case 'right': vx = speed; break;
+                        }
+                        monster.setVelocity(vx, vy);
+                        
+                        // When move finishes, start pause
+                        if (moveTimer === 1) {
+                            monster.setData('pauseTimer', Phaser.Math.Between(60, 180));
+                        }
+                    } else {
+                        // Choose new direction — move first, then pause after
+                        const directions = ['up', 'down', 'left', 'right'];
+                        const newFacing = Phaser.Utils.Array.GetRandom(directions);
+                        monster.setData('facing', newFacing);
+                        monster.setData('moveTimer', Phaser.Math.Between(60, 180)); // 1-3 seconds at 60fps
+                        monster.setData('pauseTimer', 0); // don't pause until move finishes
+                    }
+                });
+            }
+            
+            attack() {
+                if (this.isAttacking) return;
+                
+                this.isAttacking = true;
+                this.player.setVelocity(0, 0);
+                this.player.play('hiro-attack-' + this.facing);
+                
+                // Play attack sound
+                try {
+                    this.sound.play('sfx-slash', { volume: 0.5 });
+                } catch (e) {}
+                
+                // Cut grass immediately
+                this.cutNearbyGrass();
+                
+                // Reset after 250ms
+                this.time.delayedCall(250, () => {
+                    this.isAttacking = false;
+                    if (!this.mathEncounter || !this.mathEncounter.isActive) {
+                        this.player.play('hiro-idle-' + this.facing);
+                    }
+                });
+            }
+            
+            cutNearbyGrass() {
+                if (!this.grassSprites) return;
+                
+                const playerX = this.player.x;
+                const playerY = this.player.y;
+                
+                let checkX = playerX;
+                let checkY = playerY;
+                const range = 1.5 * TILE;
+                
+                switch (this.facing) {
+                    case 'up': checkY -= range; break;
+                    case 'down': checkY += range; break;
+                    case 'left': checkX -= range; break;
+                    case 'right': checkX += range; break;
+                }
+                
+                const grassToRemove = [];
+                
+                this.grassSprites.children.entries.forEach(grass => {
+                    if (grass.getData('cuttable')) {
+                        const distance = Phaser.Math.Distance.Between(
+                            grass.x, grass.y, checkX, checkY
+                        );
+                        
+                        if (distance < range) {
+                            grassToRemove.push(grass);
+                        }
+                    }
+                });
+                
+                // Check if any grass was cut
+                if (grassToRemove.length > 0) {
+                    // 30% chance for math encounter instead of normal rewards
+                    if (Math.random() < 0.3 && this.mathEncounter && !this.mathEncounter.isActive) {
+                        // Start math encounter at the first grass position
+                        const firstGrass = grassToRemove[0];
+                        this.mathEncounter.startEncounter(firstGrass.x, firstGrass.y);
+                        
+                        // Still remove the grass visually
+                        grassToRemove.forEach(grass => {
+                            this.createGrassParticles(grass.x, grass.y);
+                            grass.setVisible(false);
+                            grass.setData('cuttable', false);
+                            
+                            this.time.delayedCall(60000, () => {
+                                if (grass.scene) {
+                                    grass.setVisible(true);
+                                    grass.setData('cuttable', true);
+                                    grass.setAlpha(0);
+                                    this.tweens.add({
+                                        targets: grass,
+                                        alpha: 1,
+                                        duration: 1000,
+                                        ease: 'Sine.easeIn'
+                                    });
+                                }
+                            });
+                        });
+                    } else {
+                        // Normal grass cutting behavior
+                        grassToRemove.forEach(grass => {
+                            const gx = grass.x;
+                            const gy = grass.y;
+                            
+                            this.createGrassParticles(gx, gy);
+                            
+                            if (Math.random() < 0.7) {
+                                this.spawnCoin(gx + 8, gy + 8);
+                            }
+                            
+                            grass.setVisible(false);
+                            grass.setData('cuttable', false);
+                            
+                            this.time.delayedCall(60000, () => {
+                                if (grass.scene) {
+                                    grass.setVisible(true);
+                                    grass.setData('cuttable', true);
+                                    grass.setAlpha(0);
+                                    this.tweens.add({
+                                        targets: grass,
+                                        alpha: 1,
+                                        duration: 1000,
+                                        ease: 'Sine.easeIn'
+                                    });
+                                }
+                            });
+                        });
+                    }
+                    
+                    gameState.streak += grassToRemove.length;
+                    gameState.grassCut += grassToRemove.length;
+                    this.updatePortalStates(); // Update portal states when grass is cut
+                    this.events.emit('updateUI');
+                }
+            }
+            
+            createGrassParticles(x, y) {
+                for (let i = 0; i < 6; i++) {
+                    const particle = this.add.image(x + 8, y + 8, 'particle-grass');
+                    particle.setScale(Phaser.Math.FloatBetween(0.5, 1.5));
+                    
+                    this.tweens.add({
+                        targets: particle,
+                        x: x + 8 + Phaser.Math.Between(-20, 20),
+                        y: y + 8 + Phaser.Math.Between(-20, 20),
+                        alpha: 0,
+                        duration: 500,
+                        ease: 'Quad.easeOut',
+                        onComplete: () => particle.destroy()
+                    });
+                }
+            }
+            
+            spawnCoin(x, y) {
+                const coin = this.physics.add.sprite(x, y, 'coin');
+                coin.setScale(0.8);
+                coin.body.setSize(12, 12);
+                
+                coin.setVelocity(
+                    Phaser.Math.Between(-50, 50),
+                    Phaser.Math.Between(-100, -50)
+                );
+                coin.setBounce(0.7);
+                coin.body.setDrag(100);
+                
+                this.time.delayedCall(1000, () => {
+                    if (coin.active) {
+                        this.tweens.add({
+                            targets: coin,
+                            y: coin.y - 3,
+                            duration: 1000,
+                            ease: 'Sine.easeInOut',
+                            yoyo: true,
+                            repeat: -1
+                        });
+                        
+                        this.tweens.add({
+                            targets: coin,
+                            alpha: 0.7,
+                            duration: 1500,
+                            ease: 'Sine.easeInOut',
+                            yoyo: true,
+                            repeat: -1
+                        });
+                    }
+                });
+                
+                this.coinSprites.add(coin);
+            }
+            
+            collectCoin(player, coin) {
+                try {
+                    this.sound.play('sfx-coin', { volume: 0.6 });
+                } catch (e) {}
+                
+                for (let i = 0; i < 8; i++) {
+                    const spark = this.add.image(coin.x, coin.y, 'particle-spark');
+                    spark.setScale(0.5);
+                    
+                    this.tweens.add({
+                        targets: spark,
+                        x: coin.x + Phaser.Math.Between(-30, 30),
+                        y: coin.y + Phaser.Math.Between(-30, 30),
+                        alpha: 0,
+                        duration: 400,
+                        ease: 'Power2',
+                        onComplete: () => spark.destroy()
+                    });
+                }
+                
+                const plusText = this.add.text(coin.x, coin.y - 10, '+1', {
+                    fontFamily: 'Nunito',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    fill: '#ffd700',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5);
+                
+                this.tweens.add({
+                    targets: plusText,
+                    y: coin.y - 30,
+                    alpha: 0,
+                    duration: 1000,
+                    ease: 'Power2',
+                    onComplete: () => plusText.destroy()
+                });
+                
+                gameState.coins++;
+                this.events.emit('updateUI');
+                
+                coin.destroy();
+            }
+            
+            enterPortal(player, portal) {
+                if (this._transitioning) return; // prevent double-trigger
+                
+                const world = WORLDS[gameState.currentWorld];
+                const grassRequired = world.grassRequired;
+                
+                // Check if portal is unlocked
+                if (gameState.grassCut < grassRequired) {
+                    // Portal is locked - show message but don't transport
+                    const lockMessage = this.add.text(portal.x, portal.y - 20, 'Portal Locked!', {
+                        fontSize: '14px',
+                        fill: '#ff0000',
+                        fontWeight: 'bold',
+                        stroke: '#000000',
+                        strokeThickness: 2
+                    }).setOrigin(0.5);
+                    
+                    this.tweens.add({
+                        targets: lockMessage,
+                        y: portal.y - 35,
+                        alpha: 0,
+                        duration: 1500,
+                        onComplete: () => lockMessage.destroy()
+                    });
+                    
+                    return;
+                }
+                
+                this._transitioning = true;
+                
+                const targetWorld = portal.getData('target');
+                const spawnX = portal.getData('spawnX');
+                const spawnY = portal.getData('spawnY');
+                
+                // Play portal sound
+                try {
+                    this.sound.play('sfx-portal', { volume: 0.5 });
+                } catch (e) {}
+                
+                // Stop current music
+                if (this.currentWorldMusic) {
+                    this.currentWorldMusic.stop();
+                }
+                
+                // Stop player
+                this.player.setVelocity(0, 0);
+                
+                // Set spawn position for new world
+                gameState.spawnX = spawnX;
+                gameState.spawnY = spawnY;
+                gameState.currentWorld = targetWorld;
+                
+                // Fade out and restart scene
+                this.cameras.main.fadeOut(500, 0, 0, 0, (camera, progress) => {
+                    if (progress === 1) {
+                        // Stop UIScene so it gets re-launched fresh
+                        this.scene.stop('UIScene');
+                        this.scene.restart();
+                    }
+                });
+            }
+        }
+
+        // UIScene - Overlay interface
+        class UIScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'UIScene' });
+                this.coinText = null;
+                this.streakText = null;
+                this.worldText = null;
+                this.hearts = [];
+                this.questText = null;
+                this.xpText = null;
+                this.levelText = null;
+                this.xpBar = null;
+                this.xpBarFill = null;
+            }
+
+            create() {
+                // UI should not be zoomed
+                this.cameras.main.setZoom(1);
+                
+                // Top bar background
+                this.add.rectangle(GAME_W/2, 35, GAME_W, 70, 0x000000, 0.7);
+                
+                // Hearts
+                for (let i = 0; i < 5; i++) {
+                    const heart = this.add.text(30 + i * 30, 30, '♥', {
+                        fontSize: '24px',
+                        fill: '#ff0000'
+                    }).setOrigin(0.5);
+                    this.hearts.push(heart);
+                }
+                
+                // Level display
+                this.levelText = this.add.text(30, 55, 'Level: 1', {
+                    fontFamily: 'Nunito',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    fill: '#ffffff'
+                }).setOrigin(0, 0.5);
+                
+                // XP Bar
+                const xpBarWidth = 120;
+                const xpBarHeight = 8;
+                this.xpBar = this.add.rectangle(150, 55, xpBarWidth, xpBarHeight, 0x333333);
+                this.xpBar.setStrokeStyle(1, 0xffffff);
+                this.xpBarFill = this.add.rectangle(150 - xpBarWidth/2, 55, 0, xpBarHeight, 0x00aa00);
+                this.xpBarFill.setOrigin(0, 0.5);
+                
+                // XP Text
+                this.xpText = this.add.text(280, 55, 'XP: 0/100', {
+                    fontFamily: 'Nunito',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    fill: '#ffffff'
+                }).setOrigin(0, 0.5);
+                
+                // World indicator
+                this.worldText = this.add.text(GAME_W/2, 30, '', {
+                    fontFamily: 'Nunito',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    fill: '#ffffff'
+                }).setOrigin(0.5);
+                
+                // Coin counter
+                this.coinText = this.add.text(GAME_W - 200, 30, 'Coins: 0', {
+                    fontFamily: 'Nunito',
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    fill: '#ffd700'
+                }).setOrigin(0.5);
+                
+                // Streak counter
+                this.streakText = this.add.text(GAME_W - 80, 30, 'Streak: 0', {
+                    fontFamily: 'Nunito',
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    fill: '#4a9c4a'
+                }).setOrigin(0.5);
+                
+                // Quest objective text
+                this.questText = this.add.text(GAME_W/2, 85, '', {
+                    fontFamily: 'Nunito',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    fill: '#ffff00',
+                    stroke: '#000000',
+                    strokeThickness: 2
+                }).setOrigin(0.5);
+                
+                // Bottom hint text
+                this.add.rectangle(GAME_W/2, GAME_H - 30, GAME_W, 60, 0x000000, 0.7);
+                this.add.text(GAME_W/2, GAME_H - 30, 'WASD to move • SPACE to slash grass or talk to NPCs • Solve math problems for XP and extra coins!', {
+                    fontFamily: 'Nunito',
+                    fontSize: '16px',
+                    fill: '#ffffff'
+                }).setOrigin(0.5);
+                
+                // Listen for updates from WorldScene
+                this.scene.get('WorldScene').events.on('updateUI', this.updateUI, this);
+                
+                // Initial update
+                this.updateUI();
+            }
+            
+            updateUI() {
+                this.coinText.setText(`Coins: ${gameState.coins}`);
+                this.streakText.setText(`Streak: ${gameState.streak}`);
+                this.levelText.setText(`Level: ${gameState.level}`);
+                
+                // Update XP bar
+                const xpInLevel = gameState.xp % 100;
+                const xpForNextLevel = 100;
+                const xpBarWidth = 120;
+                const fillWidth = (xpInLevel / xpForNextLevel) * xpBarWidth;
+                this.xpBarFill.setSize(fillWidth, 8);
+                this.xpText.setText(`XP: ${xpInLevel}/${xpForNextLevel}`);
+                
+                const world = WORLDS[gameState.currentWorld];
+                if (world) {
+                    this.worldText.setText(world.name);
+                    
+                    // Update quest text
+                    const grassRequired = world.grassRequired;
+                    const grassCut = gameState.grassCut;
+                    
+                    if (grassCut >= grassRequired) {
+                        this.questText.setText('✨ Portal Open! Find the glowing gateway!');
+                        this.questText.setFill('#00ff00');
+                    } else {
+                        this.questText.setText(`🌿 ${grassCut}/${grassRequired} Cut grass to open the portal!`);
+                        this.questText.setFill('#ffff00');
+                    }
+                }
+                
+                // Update hearts
+                for (let i = 0; i < this.hearts.length; i++) {
+                    this.hearts[i].setAlpha(i < gameState.hearts ? 1 : 0.3);
+                }
+            }
+        }
+
+        // Game configuration
+        const config = {
+            type: Phaser.AUTO,
+            width: GAME_W,
+            height: GAME_H,
+            backgroundColor: '#000000',
+            parent: 'game-container',
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false
+                }
+            },
+            scene: [BootScene, MenuScene, WorldScene, UIScene],
+            pixelArt: true,
+            antialias: false,
+            roundPixels: true
+        };
+
+        // Start the game
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
