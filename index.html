@@ -314,9 +314,18 @@ class BootScene extends Phaser.Scene {
         var w = 480, h = 854;
         this.add.rectangle(w/2, h/2, w, h, COLORS.darkBg);
         var bar = this.add.rectangle(w/2 - 148, h/2 + 30, 0, 20, COLORS.accent).setOrigin(0, 0.5);
-        this.add.text(w/2, h/2 - 60, 'CHOPMATH', { fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5);
+        this.add.text(w/2, h/2 - 60, 'MATH CHOP!', { fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5);
         this.load.on('progress', function(v) { bar.width = 296 * v; });
         this.load.on('loaderror', function(f) { failedAssets.add(f.key); });
+
+        // Safety timeout — if loading stalls (e.g. iOS can't load OGG), force proceed after 8s
+        var self = this;
+        this.loadTimeout = setTimeout(function() {
+            if (self.scene.isActive('BootScene')) {
+                console.warn('Load timeout — forcing create()');
+                self.load.emit('complete');
+            }
+        }, 8000);
 
         this.load.spritesheet('hiro-idle', ASSET_BASE + 'Actor/Characters/NinjaGreen/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('hiro-walk', ASSET_BASE + 'Actor/Characters/NinjaGreen/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
@@ -361,12 +370,15 @@ class BootScene extends Phaser.Scene {
         // Chicken sprites
         this.load.spritesheet('chicken-white', ASSET_BASE + 'Actor/Animals/Chicken/SpriteSheetWhite.png', { frameWidth: 16, frameHeight: 16 });
 
-        // Audio
-        this.load.audio('music-menu', ASSET_BASE + 'Audio/Musics/1 - Adventure Begin.ogg');
-        this.load.audio('music-story', ASSET_BASE + 'Audio/Musics/6 - Story.ogg');
-        this.load.audio('music-meadow', ASSET_BASE + 'Audio/Musics/33 - Calm Village.ogg');
-        this.load.audio('music-river', ASSET_BASE + 'Audio/Musics/18 - Aquatic.ogg');
-        this.load.audio('music-combat', ASSET_BASE + 'Audio/Musics/17 - Fight.ogg');
+        // Audio — only load OGG if browser supports it (Safari/iOS doesn't)
+        var canOgg = (new Audio()).canPlayType('audio/ogg; codecs="vorbis"') !== '';
+        if (canOgg) {
+            this.load.audio('music-menu', ASSET_BASE + 'Audio/Musics/1 - Adventure Begin.ogg');
+            this.load.audio('music-story', ASSET_BASE + 'Audio/Musics/6 - Story.ogg');
+            this.load.audio('music-meadow', ASSET_BASE + 'Audio/Musics/33 - Calm Village.ogg');
+            this.load.audio('music-river', ASSET_BASE + 'Audio/Musics/18 - Aquatic.ogg');
+            this.load.audio('music-combat', ASSET_BASE + 'Audio/Musics/17 - Fight.ogg');
+        }
         this.load.audio('sfx-party', ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav');
         this.load.audio('sfx-coin', ASSET_BASE + 'Audio/Sounds/Bonus/Coin.wav');
         this.load.audio('sfx-slash', ASSET_BASE + 'Audio/Sounds/Whoosh & Slash/Slash.wav');
@@ -379,6 +391,7 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
+        if (this.loadTimeout) clearTimeout(this.loadTimeout);
         // Fallback textures
         this.makeFallback('hiro-idle', 64, 16, 0x22c55e, 16, 4);
         this.makeFallback('hiro-walk', 64, 64, 0x22c55e, 16, 16);
