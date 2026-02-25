@@ -577,6 +577,71 @@ function shuffleArray(arr) {
 }
 
 // ============================================================
+// SPLASH SCENE
+// ============================================================
+class SplashScene extends Phaser.Scene {
+    constructor() { super({ key: 'SplashScene' }); }
+
+    create() {
+        var w = this.scale.width, h = this.scale.height, self = this;
+        this.cameras.main.setBackgroundColor('#000000');
+
+        // Fade in from black
+        this.cameras.main.fadeIn(800);
+
+        // Spirited Minds logo — glowing text with subtle animation
+        var logoY = h * 0.38;
+        var glow = this.add.circle(w/2, logoY, 80, 0xf5c842, 0).setDepth(0);
+        this.tweens.add({ targets: glow, alpha: 0.08, scaleX: 1.5, scaleY: 1.5, duration: 1500, ease: 'Sine.easeOut' });
+
+        var spirited = this.add.text(w/2, logoY, 'SPIRITED MINDS', {
+            fontFamily: 'Nunito', fontSize: '34px', fontStyle: '900', color: '#f5c842',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: spirited, alpha: 1, duration: 1000, delay: 300, ease: 'Quad.easeOut' });
+
+        // Subtitle
+        var subtitle = this.add.text(w/2, logoY + 50, 'a subsidiary of VanderEls Corp.', {
+            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '600', color: '#8888aa',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: subtitle, alpha: 1, duration: 800, delay: 900, ease: 'Quad.easeOut' });
+
+        // "Brought to you by" — small text above
+        var brought = this.add.text(w/2, logoY - 40, 'Brought to you by', {
+            fontFamily: 'Nunito', fontSize: '14px', fontStyle: '600', color: '#555566'
+        }).setOrigin(0.5).setAlpha(0);
+        this.tweens.add({ targets: brought, alpha: 1, duration: 600, delay: 200 });
+
+        // Decorative line
+        var line = this.add.rectangle(w/2, logoY + 85, 0, 2, 0x333344);
+        this.tweens.add({ targets: line, width: 200, duration: 800, delay: 1200, ease: 'Quad.easeOut' });
+
+        // Transition to BootScene after 3.5s
+        this.time.delayedCall(3500, function() {
+            self.cameras.main.fadeOut(500);
+            self.time.delayedCall(500, function() {
+                self.scene.start('BootScene');
+            });
+        });
+
+        // Skip on click/tap
+        this.input.on('pointerdown', function() {
+            self.cameras.main.fadeOut(300);
+            self.time.delayedCall(300, function() {
+                self.scene.start('BootScene');
+            });
+        });
+        this.input.keyboard.on('keydown', function() {
+            self.cameras.main.fadeOut(300);
+            self.time.delayedCall(300, function() {
+                self.scene.start('BootScene');
+            });
+        });
+    }
+}
+
+// ============================================================
 // BOOT SCENE
 // ============================================================
 class BootScene extends Phaser.Scene {
@@ -6954,7 +7019,7 @@ var config = {
     physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false } },
     pixelArt: true,
     roundPixels: true,
-    scene: [BootScene, MenuScene, PrologueScene, WorldScene, CombatScene, ShopScene, VictoryScene, DeathScene, UIScene]
+    scene: [SplashScene, BootScene, MenuScene, PrologueScene, WorldScene, CombatScene, ShopScene, VictoryScene, DeathScene, UIScene]
 };
 
 if (document.fonts && document.fonts.ready) {
