@@ -1714,6 +1714,10 @@ class MenuScene extends Phaser.Scene {
 class WorldScene extends Phaser.Scene {
     constructor() { super({ key: 'WorldScene' }); }
 
+    init(data) {
+        this.sceneData = data || {};
+    }
+
     create() {
         var T = 48, COLS = 20, ROWS = 20;
         this.T = T; this.COLS = COLS; this.ROWS = ROWS;
@@ -1882,8 +1886,10 @@ class WorldScene extends Phaser.Scene {
         // Start chicken wander AI
         this.startChickenWander();
 
-        // Player
-        var sx = sp.c * T + T/2, sy = sp.r * T + T/2;
+        // Player — use saved position if returning from shop
+        var spawnR = (this.sceneData.fromShop && this.sceneData.playerPos) ? this.sceneData.playerPos.r : sp.r;
+        var spawnC = (this.sceneData.fromShop && this.sceneData.playerPos) ? this.sceneData.playerPos.c : sp.c;
+        var sx = spawnC * T + T/2, sy = spawnR * T + T/2;
         this.shadow = this.add.ellipse(sx, sy+20, 36, 14, 0x000000, 0.3).setDepth(9);
         this.player = this.physics.add.sprite(sx, sy, 'hiro-idle', 0).setScale(3).setDepth(10);
         this.player.body.setSize(12, 12).setOffset(2, 4);
@@ -1915,7 +1921,8 @@ class WorldScene extends Phaser.Scene {
         this.touchDir = { left: false, right: false, up: false, down: false };
         this.createTouchControls();
 
-        // === LAND INTRO BANNER ===
+        // === LAND INTRO BANNER === (skip when returning from shop)
+        if (!this.sceneData.fromShop) {
         var storyData = STORY.lands[gameState.currentLand] || {};
         var landNum = gameState.currentLand;
         var cam = this.cameras.main;
@@ -1981,6 +1988,7 @@ class WorldScene extends Phaser.Scene {
                 });
             }
         });
+        } // end if !fromShop
     }
 
     createTouchControls() {
@@ -2099,7 +2107,9 @@ class WorldScene extends Phaser.Scene {
                     if (npcInfo.msg === '__SHOP__') {
                         try { if (this.bgm) this.bgm.stop(); } catch(e) {}
                         this.scene.stop('UIScene');
-                        this.scene.start('ShopScene');
+                        var playerR = Math.floor(this.player.y / this.T);
+                        var playerC = Math.floor(this.player.x / this.T);
+                        this.scene.start('ShopScene', { playerPos: { r: playerR, c: playerC } });
                     } else {
                         this.showDialog(npcInfo.name, npcInfo.msg);
                     }
@@ -4988,6 +4998,10 @@ class VictoryScene extends Phaser.Scene {
 class ShopScene extends Phaser.Scene {
     constructor() { super({ key: 'ShopScene' }); }
 
+    init(data) {
+        this.shopData = data || {};
+    }
+
     create() {
         var w = 480, h = 854, self = this;
         this.add.rectangle(w/2, h/2, w, h, 0x1a1a2e);
@@ -5038,7 +5052,7 @@ class ShopScene extends Phaser.Scene {
         backBtn.on('pointerover', function() { backBtn.setScale(1.05); });
         backBtn.on('pointerout', function() { backBtn.setScale(1.0); });
         backBtn.on('pointerup', function() {
-            self.scene.start('WorldScene');
+            self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
         });
     }
 
