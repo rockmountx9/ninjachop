@@ -16,6 +16,8 @@
         #game-container::before {
             content: 'CHOPMATH';
             position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             font-family: 'Nunito', sans-serif;
             font-size: 6vw;
             font-weight: 900;
@@ -2274,8 +2276,13 @@ class WorldScene extends Phaser.Scene {
         this.coinGroup = this.physics.add.group();
         this.physics.add.overlap(this.player, this.coinGroup, this.grabCoin, null, this);
 
-        // Camera
-        this.cameras.main.setBounds(0, 0, worldW, worldH);
+        // Camera — center world in viewport if viewport is wider/taller
+        var vw = this.scale.width, vh = this.scale.height;
+        var camX = Math.min(0, (worldW - vw) / 2);
+        var camY = Math.min(0, (worldH - vh) / 2);
+        var camW = Math.max(worldW, vw);
+        var camH = Math.max(worldH, vh);
+        this.cameras.main.setBounds(camX, camY, camW, camH);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
         // Input
@@ -7225,7 +7232,7 @@ var _vw = window.innerWidth || 480;
 var _vh = window.innerHeight || 854;
 var _aspect = _vw / _vh;
 var GAME_H = 960;
-var GAME_W = Math.max(360, Math.min(960, Math.round(GAME_H * _aspect)));
+var GAME_W = Math.max(360, Math.round(GAME_H * _aspect));
 
 var config = {
     type: Phaser.AUTO,
