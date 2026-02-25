@@ -3229,9 +3229,31 @@ class CombatScene extends Phaser.Scene {
             if ((p.a === 6 && p.b === 7) || (p.a === 7 && p.b === 6) || this.correctAnswer === 67) {
                 if (!this.played67) specialType = '67';
             }
-            if (p.a === 8 && p.b === 8 && (p.op === '\u00d7' || p.op === '*')) {
+            if (p.a === 8 && p.b === 8 && (p.op === '×' || p.op === '*')) {
                 if (!this.played88) specialType = '88';
             }
+            // 9+9=18 "Old Enough to Vote"
+            if (p.a === 9 && p.b === 9 && p.op === '+' && !this.playedVote) specialType = 'vote';
+            // 7×8=56 "5-6-7-8 Dance"
+            if (p.a === 7 && p.b === 8 && (p.op === '×' || p.op === '*') && !this.played5678) specialType = '5678';
+            // 4×4=16 "Sweet Sixteen"
+            if (p.a === 4 && p.b === 4 && (p.op === '×' || p.op === '*') && !this.played16) specialType = 'sweet16';
+            // 6×6=36 "Six-Pack"
+            if (p.a === 6 && p.b === 6 && (p.op === '×' || p.op === '*') && !this.played36) specialType = 'sixpack';
+            // 3×7=21 "Blackjack"
+            if (((p.a === 3 && p.b === 7) || (p.a === 7 && p.b === 3)) && (p.op === '×' || p.op === '*') && !this.played21) specialType = 'blackjack';
+            // 8×7=56 "5678 Remix Moonwalk"
+            if (p.a === 8 && p.b === 7 && (p.op === '×' || p.op === '*') && !this.playedMoonwalk) specialType = 'moonwalk';
+            // 81÷9=9 "The Mirror"
+            if (p.a === 81 && p.b === 9 && (p.op === '÷') && !this.playedMirror) specialType = 'mirror';
+            // 5×8=40 "The Big 4-0"
+            if (((p.a === 5 && p.b === 8) || (p.a === 8 && p.b === 5)) && (p.op === '×' || p.op === '*') && !this.played40) specialType = 'big40';
+            // 2×2=4 "Too Easy"
+            if (p.a === 2 && p.b === 2 && (p.op === '×' || p.op === '*') && !this.playedEasy) specialType = 'tooeasy';
+            // 6×8=48 "Four-Ate"
+            if (((p.a === 6 && p.b === 8) || (p.a === 8 && p.b === 6)) && (p.op === '×' || p.op === '*') && !this.played48) specialType = 'fourate';
+            // 72÷8=9 "Full Circle"
+            if (p.a === 72 && p.b === 8 && (p.op === '÷') && !this.playedCircle) specialType = 'circle';
 
             if (specialType) {
                 this.combatActive = false;
@@ -3663,6 +3685,1022 @@ class CombatScene extends Phaser.Scene {
                 self.tweens.add({ targets: cutContainer, alpha: 0, duration: 500,
                     onComplete: function() { cutContainer.destroy(true); callback(); }
                 });
+            });
+
+        // ================================================================
+        // 9 + 9 = 18 — "OLD ENOUGH TO VOTE!"
+        // Memory anchor: 18 is a milestone age. Double nines = grown up.
+        // ================================================================
+        } else if (type === 'vote') {
+            this.playedVote = true;
+            try { self.sound.play('sfx-party', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var uVote = new SpeechSynthesisUtterance('Old enough to VOTE!');
+                    uVote.rate = 0.9; uVote.pitch = 1.3; uVote.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(uVote);
+                }
+            } catch(e) {}
+
+            // Patriotic bg — deep blue
+            var bgVote = this.add.rectangle(w/2, h/2, w, h, 0x0a1a3a, 0).setAlpha(0);
+            cutContainer.add(bgVote);
+            this.tweens.add({ targets: bgVote, alpha: 0.92, duration: 300 });
+
+            // Red and white stripes at bottom
+            for (var sv = 0; sv < 6; sv++) {
+                var stripeColor = sv % 2 === 0 ? 0xcc2222 : 0xffffff;
+                var stripe = this.add.rectangle(w/2, h - 30 - sv * 18, w, 16, stripeColor, 0.25);
+                cutContainer.add(stripe);
+            }
+
+            // Hiro in a suit (tinted darker to look formal)
+            var hiroVote = this.add.sprite(w/2, h/2 + 100, 'hiro-walk', 0).setScale(8).setAlpha(0).setTint(0x88aacc);
+            cutContainer.add(hiroVote);
+            this.tweens.add({ targets: hiroVote, alpha: 1, duration: 300, delay: 300 });
+
+            // "I VOTED" sticker
+            var stickerBg = this.add.circle(w/2 + 80, h/2 + 50, 32, 0xffffff, 0.9).setAlpha(0);
+            var stickerText = this.add.text(w/2 + 80, h/2 + 46, 'I\nVOTED', {
+                fontFamily: 'Nunito', fontSize: '14px', fontStyle: '900', color: '#cc2222', align: 'center'
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(stickerBg); cutContainer.add(stickerText);
+            this.tweens.add({ targets: [stickerBg, stickerText], alpha: 1, duration: 300, delay: 800 });
+            this.tweens.add({ targets: [stickerBg, stickerText], angle: -8, duration: 200, delay: 800 });
+
+            // Two giant 9s approach each other
+            var nineL = this.add.text(60, h/2 - 40, '9', {
+                fontFamily: 'Nunito', fontSize: '100px', fontStyle: '900', color: '#ff4444', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            var nineR = this.add.text(w - 60, h/2 - 40, '9', {
+                fontFamily: 'Nunito', fontSize: '100px', fontStyle: '900', color: '#4444ff', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(nineL); cutContainer.add(nineR);
+            this.tweens.add({ targets: nineL, alpha: 1, x: w/2 - 70, duration: 600, delay: 200, ease: 'Power2' });
+            this.tweens.add({ targets: nineR, alpha: 1, x: w/2 + 70, duration: 600, delay: 200, ease: 'Power2' });
+
+            // Plus sign appears between them
+            var plusV = this.add.text(w/2, h/2 - 40, '+', {
+                fontFamily: 'Nunito', fontSize: '60px', fontStyle: '900', color: '#f5c842', stroke: '#000', strokeThickness: 4
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(plusV);
+            this.tweens.add({ targets: plusV, scaleX: 1, scaleY: 1, duration: 300, delay: 500, ease: 'Back.easeOut' });
+
+            // "OLD ENOUGH TO VOTE!" title
+            var voteTitle = this.add.text(w/2, 100, 'OLD ENOUGH\nTO VOTE!', {
+                fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 6, align: 'center'
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(voteTitle);
+            this.tweens.add({ targets: voteTitle, scaleX: 1, scaleY: 1, duration: 500, delay: 400, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: voteTitle, scaleX: 1.05, scaleY: 1.05, duration: 400, yoyo: true, repeat: -1, delay: 900 });
+
+            // "= 18" big gold reveal
+            var eq18 = this.add.text(w/2, h/2 + 180, '= 18', {
+                fontFamily: 'Nunito', fontSize: '72px', fontStyle: '900', color: '#ffffff',
+                stroke: '#f5c842', strokeThickness: 6
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(eq18);
+            this.tweens.add({ targets: eq18, scaleX: 1, scaleY: 1, duration: 500, delay: 1000, ease: 'Back.easeOut' });
+
+            // Mnemonic text
+            var mnVote = this.add.text(w/2, h - 60, 'Double nines make 18 — grown-up math!', {
+                fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#aaccff', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mnVote);
+            this.tweens.add({ targets: mnVote, alpha: 1, duration: 400, delay: 1200 });
+
+            // Confetti
+            this.time.delayedCall(600, function() {
+                for (var vc = 0; vc < 30; vc++) {
+                    var vcx = Phaser.Math.Between(20, w - 20);
+                    var vcc = [0xff4444, 0x4444ff, 0xffffff, 0xf5c842][vc % 4];
+                    var vcObj = self.add.star(vcx, -10, 4, 3, 7, vcc);
+                    cutContainer.add(vcObj);
+                    self.tweens.add({ targets: vcObj, y: Phaser.Math.Between(100, h - 50), x: vcx + Phaser.Math.Between(-30, 30), angle: Phaser.Math.Between(-360, 360), duration: Phaser.Math.Between(1000, 2500), ease: 'Quad.easeOut' });
+                }
+            });
+
+            this.cameras.main.shake(200, 0.02);
+            this.time.delayedCall(4000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 7 × 8 = 56 — "5-6-7-8!" Dance Countdown
+        // Memory anchor: The answer (56) is hiding in the countdown 5,6,7,8
+        // ================================================================
+        } else if (type === '5678') {
+            this.played5678 = true;
+            try { self.sound.play('sfx-party', { volume: 0.8 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u5678 = new SpeechSynthesisUtterance('Five! Six! Seven! Eight!');
+                    u5678.rate = 0.8; u5678.pitch = 1.4; u5678.volume = 1.0;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u5678);
+                }
+            } catch(e) {}
+
+            // Bright spotlight bg
+            var bg5678 = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0).setAlpha(0);
+            cutContainer.add(bg5678);
+            this.tweens.add({ targets: bg5678, alpha: 0.9, duration: 200 });
+
+            // Spotlight cone
+            var spot = this.add.triangle(w/2, 0, 0, 0, w * 0.7, 0, w * 0.35, h, 0xf5c842, 0.06);
+            cutContainer.add(spot);
+
+            // Dance floor (bottom)
+            var flY = h - 160;
+            var dfColors = [0xff4444, 0xf5c842, 0x44ff88, 0x4488ff, 0xff44ff, 0x44ffff];
+            for (var dt = 0; dt < 4; dt++) {
+                for (var dc = 0; dc < 10; dc++) {
+                    var dtile = self.add.rectangle(dc * 48 + 24, flY + dt * 40 + 20, 44, 36, dfColors[(dt + dc) % 6], 0.12).setStrokeStyle(1, 0xffffff, 0.08);
+                    cutContainer.add(dtile);
+                    self.tweens.add({ targets: dtile, alpha: 0.4, duration: Phaser.Math.Between(200, 400), yoyo: true, repeat: -1, delay: (dt + dc) * 60 });
+                }
+            }
+
+            // Giant countdown numbers — 5, 6, 7, 8 — each one SLAMS in
+            var countNums = ['5', '6', '7', '8'];
+            var countColors = ['#ff4444', '#f5c842', '#44ff88', '#44ccff'];
+            for (var ci = 0; ci < 4; ci++) {
+                (function(idx) {
+                    self.time.delayedCall(idx * 500 + 200, function() {
+                        var cNum = self.add.text(w/2, h/2 - 60, countNums[idx], {
+                            fontFamily: 'Nunito', fontSize: '140px', fontStyle: '900', color: countColors[idx],
+                            stroke: '#000', strokeThickness: 8
+                        }).setOrigin(0.5).setScale(3).setAlpha(0);
+                        cutContainer.add(cNum);
+                        self.tweens.add({ targets: cNum, scaleX: 1, scaleY: 1, alpha: 1, duration: 250, ease: 'Back.easeOut' });
+                        self.tweens.add({ targets: cNum, alpha: 0, scaleX: 0.3, scaleY: 0.3, duration: 300, delay: 350 });
+                        self.cameras.main.shake(100, 0.015);
+                    });
+                })(ci);
+            }
+
+            // After countdown: "= 56!" reveal
+            this.time.delayedCall(2400, function() {
+                self.cameras.main.flash(200, 245, 200, 50);
+
+                // Hiro dancing
+                var hiroDance = self.add.sprite(w/2, flY - 10, 'hiro-walk', 3).setScale(6);
+                cutContainer.add(hiroDance);
+                self.tweens.add({ targets: hiroDance, y: flY - 30, duration: 200, yoyo: true, repeat: -1, ease: 'Sine.easeOut' });
+                self.tweens.add({ targets: hiroDance, x: w/2 + 15, duration: 250, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+
+                var ans56 = self.add.text(w/2, h/2 - 80, '56!', {
+                    fontFamily: 'Nunito', fontSize: '110px', fontStyle: '900', color: '#f5c842',
+                    stroke: '#000', strokeThickness: 8
+                }).setOrigin(0.5).setScale(0);
+                cutContainer.add(ans56);
+                self.tweens.add({ targets: ans56, scaleX: 1, scaleY: 1, duration: 500, ease: 'Back.easeOut' });
+                self.tweens.add({ targets: ans56, scaleX: 1.05, scaleY: 1.05, duration: 300, yoyo: true, repeat: -1, delay: 500 });
+
+                var sub56 = self.add.text(w/2, h/2 + 20, '7 × 8 = 56', {
+                    fontFamily: 'Nunito', fontSize: '36px', fontStyle: '800', color: '#ffffff', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5).setAlpha(0);
+                cutContainer.add(sub56);
+                self.tweens.add({ targets: sub56, alpha: 1, duration: 400, delay: 300 });
+
+                var mn56 = self.add.text(w/2, h/2 + 70, '5, 6, 7, 8 — the answer is the countdown!', {
+                    fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#aaccff', stroke: '#000', strokeThickness: 3
+                }).setOrigin(0.5).setAlpha(0);
+                cutContainer.add(mn56);
+                self.tweens.add({ targets: mn56, alpha: 1, duration: 400, delay: 600 });
+
+                // Crowd bouncing
+                for (var cr56 = 0; cr56 < 7; cr56++) {
+                    var crx56 = 30 + cr56 * 65;
+                    var crGuy = self.add.sprite(crx56, flY + 20, ['hiro-walk', 'npc-elder', 'npc-merchant', 'npc-young'][cr56 % 4], 0).setScale(3).setAlpha(0.8);
+                    cutContainer.add(crGuy);
+                    self.tweens.add({ targets: crGuy, y: flY + 4, duration: 200, yoyo: true, repeat: -1, delay: cr56 * 60 });
+                }
+            });
+
+            // Confetti
+            this.time.delayedCall(2500, function() {
+                for (var c56 = 0; c56 < 35; c56++) {
+                    var cx56 = Phaser.Math.Between(20, w - 20);
+                    var cc56 = dfColors[c56 % 6];
+                    var cf56 = self.add.star(cx56, -10, 4, 3, 7, cc56);
+                    cutContainer.add(cf56);
+                    self.tweens.add({ targets: cf56, y: Phaser.Math.Between(100, h - 40), angle: Phaser.Math.Between(-360, 360), duration: Phaser.Math.Between(1200, 2500), ease: 'Quad.easeOut' });
+                }
+            });
+
+            this.time.delayedCall(4500, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 4 × 4 = 16 — "SWEET SIXTEEN!"
+        // Memory anchor: Birthday party! 4×4 = the party age
+        // ================================================================
+        } else if (type === 'sweet16') {
+            this.played16 = true;
+            try { self.sound.play('sfx-party', { volume: 0.8 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u16 = new SpeechSynthesisUtterance('Sweet sixteen!');
+                    u16.rate = 0.85; u16.pitch = 1.5; u16.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u16);
+                }
+            } catch(e) {}
+
+            // Party bg — warm pink/purple
+            var bg16 = this.add.rectangle(w/2, h/2, w, h, 0x2a0a2a, 0).setAlpha(0);
+            cutContainer.add(bg16);
+            this.tweens.add({ targets: bg16, alpha: 0.92, duration: 300 });
+
+            // Streamers
+            var streamColors = [0xff69b4, 0xff44ff, 0xf5c842, 0x44ffff, 0xff4488];
+            for (var st = 0; st < 12; st++) {
+                var stx = Phaser.Math.Between(20, w - 20);
+                var stLine = self.add.line(0, 0, stx, -20, stx + Phaser.Math.Between(-40, 40), Phaser.Math.Between(200, h), streamColors[st % 5], 0.3).setLineWidth(2);
+                cutContainer.add(stLine);
+            }
+
+            // Birthday cake (built from rectangles)
+            var cakeY = h/2 + 80;
+            var cakeBase = this.add.rectangle(w/2, cakeY, 120, 60, 0xff69b4).setStrokeStyle(2, 0xcc4488);
+            var cakeTop = this.add.rectangle(w/2, cakeY - 40, 100, 30, 0xffaacc).setStrokeStyle(2, 0xff69b4);
+            var cakeFrost = this.add.rectangle(w/2, cakeY - 18, 120, 8, 0xffffff, 0.7);
+            cutContainer.add(cakeBase); cutContainer.add(cakeTop); cutContainer.add(cakeFrost);
+
+            // Candles (1 and 6)
+            var candle1 = this.add.rectangle(w/2 - 20, cakeY - 68, 6, 24, 0xf5c842);
+            var flame1 = this.add.circle(w/2 - 20, cakeY - 84, 6, 0xff8800);
+            var candle6 = this.add.rectangle(w/2 + 20, cakeY - 68, 6, 24, 0xf5c842);
+            var flame6 = this.add.circle(w/2 + 20, cakeY - 84, 6, 0xff8800);
+            cutContainer.add(candle1); cutContainer.add(flame1); cutContainer.add(candle6); cutContainer.add(flame6);
+            this.tweens.add({ targets: [flame1, flame6], scaleX: 1.3, scaleY: 0.7, duration: 200, yoyo: true, repeat: -1 });
+
+            // "1" and "6" on candles
+            this.add.text(w/2 - 20, cakeY - 68, '1', { fontFamily: 'Nunito', fontSize: '14px', fontStyle: '900', color: '#000' }).setOrigin(0.5);
+            this.add.text(w/2 + 20, cakeY - 68, '6', { fontFamily: 'Nunito', fontSize: '14px', fontStyle: '900', color: '#000' }).setOrigin(0.5);
+
+            // "SWEET SIXTEEN!" title
+            var title16 = this.add.text(w/2, 80, 'SWEET\nSIXTEEN!', {
+                fontFamily: 'Nunito', fontSize: '52px', fontStyle: '900', color: '#ff69b4',
+                stroke: '#000', strokeThickness: 6, align: 'center'
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(title16);
+            this.tweens.add({ targets: title16, scaleX: 1, scaleY: 1, duration: 500, delay: 200, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: title16, scaleX: 1.05, scaleY: 1.05, duration: 400, yoyo: true, repeat: -1, delay: 700 });
+
+            // 4 × 4 = 16 equation
+            var eq16 = this.add.text(w/2, h/2 - 30, '4 × 4 = 16', {
+                fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#f5c842', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(eq16);
+            this.tweens.add({ targets: eq16, scaleX: 1, scaleY: 1, duration: 400, delay: 600, ease: 'Back.easeOut' });
+
+            // Mnemonic
+            var mn16 = this.add.text(w/2, h - 50, 'Four times four throws a party — sweet 16!', {
+                fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#ffaacc', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mn16);
+            this.tweens.add({ targets: mn16, alpha: 1, duration: 400, delay: 1000 });
+
+            // Balloon confetti burst
+            this.time.delayedCall(400, function() {
+                for (var b16 = 0; b16 < 25; b16++) {
+                    var bx16 = Phaser.Math.Between(30, w - 30);
+                    var bc16 = [0xff69b4, 0xff44ff, 0xf5c842, 0x44ffff, 0xffffff][b16 % 5];
+                    var ball = self.add.circle(bx16, h + 20, Phaser.Math.Between(8, 16), bc16, 0.7);
+                    cutContainer.add(ball);
+                    self.tweens.add({ targets: ball, y: Phaser.Math.Between(60, h - 100), duration: Phaser.Math.Between(1500, 3000), ease: 'Sine.easeOut' });
+                    self.tweens.add({ targets: ball, x: bx16 + Phaser.Math.Between(-20, 20), duration: 2000, yoyo: true, repeat: -1 });
+                }
+            });
+
+            this.cameras.main.shake(200, 0.02);
+            this.time.delayedCall(4000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 6 × 6 = 36 — "SIX-PACK!"
+        // Memory anchor: Six sixes = six-pack of power (36)
+        // ================================================================
+        } else if (type === 'sixpack') {
+            this.played36 = true;
+            try { self.sound.play('sfx-party', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u36 = new SpeechSynthesisUtterance('SIX PACK!');
+                    u36.rate = 0.8; u36.pitch = 0.9; u36.volume = 1.0;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u36);
+                }
+            } catch(e) {}
+
+            // Dark gym bg
+            var bg36 = this.add.rectangle(w/2, h/2, w, h, 0x0a0a1a, 0).setAlpha(0);
+            cutContainer.add(bg36);
+            this.tweens.add({ targets: bg36, alpha: 0.92, duration: 300 });
+
+            // Spotlight on center
+            var spot36 = this.add.circle(w/2, h/2 + 20, 140, 0xf5c842, 0.06);
+            cutContainer.add(spot36);
+            this.tweens.add({ targets: spot36, alpha: 0.12, duration: 600, yoyo: true, repeat: -1 });
+
+            // Giant Hiro — flexing (facing camera, scaled up)
+            var hiroFlex = this.add.sprite(w/2, h/2 + 40, 'hiro-walk', 0).setScale(12).setAlpha(0);
+            cutContainer.add(hiroFlex);
+            this.tweens.add({ targets: hiroFlex, alpha: 1, duration: 400, delay: 200 });
+            // Pulse flex
+            this.tweens.add({ targets: hiroFlex, scaleX: 12.5, scaleY: 11.5, duration: 400, yoyo: true, repeat: -1, delay: 600 });
+
+            // Six-pack abs overlay — 6 glowing rectangles on Hiro's body
+            var absY = h/2 + 30;
+            for (var ab = 0; ab < 6; ab++) {
+                var abx = w/2 + (ab % 2 === 0 ? -18 : 18);
+                var aby = absY - 20 + Math.floor(ab / 2) * 22;
+                var absRect = this.add.rectangle(abx, aby, 28, 16, 0xf5c842, 0.5).setStrokeStyle(2, 0xf5c842, 0.8).setAlpha(0);
+                cutContainer.add(absRect);
+                this.tweens.add({ targets: absRect, alpha: 1, duration: 200, delay: 400 + ab * 150 });
+                this.tweens.add({ targets: absRect, alpha: 0.5, duration: 300, yoyo: true, repeat: -1, delay: 1400 + ab * 100 });
+            }
+
+            // "SIX-PACK!" title
+            var title36 = this.add.text(w/2, 80, 'SIX-PACK!', {
+                fontFamily: 'Nunito', fontSize: '56px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 6
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(title36);
+            this.tweens.add({ targets: title36, scaleX: 1, scaleY: 1, duration: 500, delay: 300, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: title36, scaleX: 1.06, scaleY: 1.06, duration: 300, yoyo: true, repeat: -1, delay: 800 });
+
+            // "6 × 6 = 36"
+            var eq36 = this.add.text(w/2, 170, '6 × 6 = 36', {
+                fontFamily: 'Nunito', fontSize: '42px', fontStyle: '900', color: '#ffffff', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eq36);
+            this.tweens.add({ targets: eq36, alpha: 1, duration: 400, delay: 800 });
+
+            // Mnemonic
+            var mn36 = this.add.text(w/2, h - 50, 'Six times six = six-pack of POWER: 36!', {
+                fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#aaccff', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mn36);
+            this.tweens.add({ targets: mn36, alpha: 1, duration: 400, delay: 1200 });
+
+            // Energy particles
+            this.time.delayedCall(500, function() {
+                for (var ep36 = 0; ep36 < 20; ep36++) {
+                    var epA = (ep36 / 20) * Math.PI * 2;
+                    var epR = Phaser.Math.Between(100, 200);
+                    var epP = self.add.circle(w/2, h/2 + 30, 3, 0xf5c842, 0.8);
+                    cutContainer.add(epP);
+                    self.tweens.add({ targets: epP, x: w/2 + Math.cos(epA) * epR, y: h/2 + 30 + Math.sin(epA) * epR, alpha: 0, duration: 1000, delay: ep36 * 80, ease: 'Quad.easeOut' });
+                }
+            });
+
+            this.cameras.main.shake(300, 0.025);
+            this.time.delayedCall(4000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 3 × 7 = 21 — "BLACKJACK!"
+        // Memory anchor: 21 is blackjack — the winning hand
+        // ================================================================
+        } else if (type === 'blackjack') {
+            this.played21 = true;
+            try { self.sound.play('sfx-party', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u21 = new SpeechSynthesisUtterance('BLACKJACK!');
+                    u21.rate = 0.85; u21.pitch = 1.2; u21.volume = 1.0;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u21);
+                }
+            } catch(e) {}
+
+            // Casino green bg
+            var bg21 = this.add.rectangle(w/2, h/2, w, h, 0x0a3a1a, 0).setAlpha(0);
+            cutContainer.add(bg21);
+            this.tweens.add({ targets: bg21, alpha: 0.92, duration: 300 });
+
+            // Green felt table top
+            var felt = this.add.rectangle(w/2, h/2 + 40, 380, 220, 0x1a6a2a, 0.6).setStrokeStyle(3, 0xf5c842, 0.5);
+            cutContainer.add(felt);
+
+            // Card 1 — Ace (= value depends but implies winning)
+            var card1Bg = this.add.rectangle(w/2 - 60, h/2 + 20, 80, 110, 0xffffff).setStrokeStyle(2, 0x333333).setAngle(-8).setAlpha(0);
+            var card1A = this.add.text(w/2 - 60, h/2 + 5, 'A', { fontFamily: 'Nunito', fontSize: '36px', fontStyle: '900', color: '#cc0000' }).setOrigin(0.5).setAngle(-8).setAlpha(0);
+            var card1S = this.add.text(w/2 - 60, h/2 + 40, '\u2665', { fontFamily: 'Nunito', fontSize: '28px', color: '#cc0000' }).setOrigin(0.5).setAngle(-8).setAlpha(0);
+            cutContainer.add(card1Bg); cutContainer.add(card1A); cutContainer.add(card1S);
+
+            // Card 2 — King
+            var card2Bg = this.add.rectangle(w/2 + 40, h/2 + 30, 80, 110, 0xffffff).setStrokeStyle(2, 0x333333).setAngle(5).setAlpha(0);
+            var card2K = this.add.text(w/2 + 40, h/2 + 15, 'K', { fontFamily: 'Nunito', fontSize: '36px', fontStyle: '900', color: '#000000' }).setOrigin(0.5).setAngle(5).setAlpha(0);
+            var card2S = this.add.text(w/2 + 40, h/2 + 50, '\u2660', { fontFamily: 'Nunito', fontSize: '28px', color: '#000000' }).setOrigin(0.5).setAngle(5).setAlpha(0);
+            cutContainer.add(card2Bg); cutContainer.add(card2K); cutContainer.add(card2S);
+
+            // Cards slam down one by one
+            this.time.delayedCall(400, function() {
+                self.tweens.add({ targets: [card1Bg, card1A, card1S], alpha: 1, duration: 150 });
+                self.cameras.main.shake(80, 0.01);
+            });
+            this.time.delayedCall(800, function() {
+                self.tweens.add({ targets: [card2Bg, card2K, card2S], alpha: 1, duration: 150 });
+                self.cameras.main.shake(80, 0.01);
+            });
+
+            // "BLACKJACK!" title
+            var title21 = this.add.text(w/2, 80, 'BLACKJACK!', {
+                fontFamily: 'Nunito', fontSize: '52px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 6
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(title21);
+            this.tweens.add({ targets: title21, scaleX: 1, scaleY: 1, duration: 500, delay: 1000, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: title21, scaleX: 1.05, scaleY: 1.05, duration: 400, yoyo: true, repeat: -1, delay: 1500 });
+
+            // "3 × 7 = 21" equation
+            var eq21 = this.add.text(w/2, 165, '3 × 7 = 21', {
+                fontFamily: 'Nunito', fontSize: '40px', fontStyle: '900', color: '#ffffff', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eq21);
+            this.tweens.add({ targets: eq21, alpha: 1, duration: 400, delay: 1200 });
+
+            // Mnemonic
+            var mn21 = this.add.text(w/2, h - 50, 'Three sevens hit 21 — that\'s a winning hand!', {
+                fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#aaffaa', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mn21);
+            this.tweens.add({ targets: mn21, alpha: 1, duration: 400, delay: 1400 });
+
+            // Gold chip confetti
+            this.time.delayedCall(1100, function() {
+                for (var gc21 = 0; gc21 < 25; gc21++) {
+                    var gcx = Phaser.Math.Between(30, w - 30);
+                    var gcC = [0xf5c842, 0xffffff, 0xcc0000, 0x44ff88][gc21 % 4];
+                    var chip = self.add.circle(gcx, -10, Phaser.Math.Between(4, 8), gcC, 0.8);
+                    cutContainer.add(chip);
+                    self.tweens.add({ targets: chip, y: Phaser.Math.Between(100, h - 80), angle: Phaser.Math.Between(-360, 360), duration: Phaser.Math.Between(1200, 2500), ease: 'Quad.easeOut' });
+                }
+            });
+
+            this.time.delayedCall(4000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 8 × 7 = 56 — "5-6-7-8 REMIX!" (Moonwalk Edition)
+        // Memory anchor: Same 56 countdown but Hiro moonwalks backwards
+        // ================================================================
+        } else if (type === 'moonwalk') {
+            this.playedMoonwalk = true;
+            try { self.sound.play('sfx-party', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var uMW = new SpeechSynthesisUtterance('Five six seven eight... REMIX!');
+                    uMW.rate = 0.85; uMW.pitch = 1.3; uMW.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(uMW);
+                }
+            } catch(e) {}
+
+            // Disco bg
+            var bgMW = this.add.rectangle(w/2, h/2, w, h, 0x0a0a1a, 0).setAlpha(0);
+            cutContainer.add(bgMW);
+            this.tweens.add({ targets: bgMW, alpha: 0.92, duration: 200 });
+
+            // Disco ball
+            var disco = this.add.circle(w/2, 60, 30, 0xcccccc).setStrokeStyle(2, 0xffffff);
+            cutContainer.add(disco);
+            this.tweens.add({ targets: disco, angle: 360, duration: 3000, repeat: -1 });
+            // Disco light rays
+            for (var dr = 0; dr < 8; dr++) {
+                var drAngle = (dr / 8) * Math.PI * 2;
+                var drEnd = 200;
+                var drColor = [0xff4444, 0xf5c842, 0x44ff88, 0x4488ff, 0xff44ff, 0x44ffff, 0xff8844, 0xffffff][dr];
+                var ray = this.add.line(0, 0, w/2, 60, w/2 + Math.cos(drAngle) * drEnd, 60 + Math.sin(drAngle) * drEnd, drColor, 0.15).setLineWidth(3);
+                cutContainer.add(ray);
+                this.tweens.add({ targets: ray, alpha: 0.03, duration: 400, yoyo: true, repeat: -1, delay: dr * 80 });
+            }
+
+            // "REMIX!" badge
+            var remixBadge = this.add.text(w/2, 130, 'REMIX!', {
+                fontFamily: 'Nunito', fontSize: '28px', fontStyle: '900', color: '#ff44ff',
+                stroke: '#000', strokeThickness: 4
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(remixBadge);
+            this.tweens.add({ targets: remixBadge, scaleX: 1, scaleY: 1, duration: 300, delay: 200, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: remixBadge, angle: -5, duration: 300, yoyo: true, repeat: -1, delay: 500 });
+
+            // Hiro moonwalking — slides backwards across the screen
+            var hiroMW = this.add.sprite(w + 40, h/2 + 80, 'hiro-walk', 2).setScale(6);
+            cutContainer.add(hiroMW);
+            // Smooth glide from right to left (facing left = frame 2, moving right-to-left = moonwalk illusion)
+            this.tweens.add({ targets: hiroMW, x: -40, duration: 3500, ease: 'Linear' });
+            // Bob up and down
+            this.tweens.add({ targets: hiroMW, y: h/2 + 70, duration: 200, yoyo: true, repeat: -1 });
+
+            // Numbers count backwards: 8, 7, 6, 5 — then answer
+            var mwNums = ['8', '7', '6', '5'];
+            var mwColors = ['#44ccff', '#44ff88', '#f5c842', '#ff4444'];
+            for (var mwi = 0; mwi < 4; mwi++) {
+                (function(idx) {
+                    self.time.delayedCall(idx * 450 + 300, function() {
+                        var mwN = self.add.text(w/2, h/2 - 60, mwNums[idx], {
+                            fontFamily: 'Nunito', fontSize: '120px', fontStyle: '900', color: mwColors[idx], stroke: '#000', strokeThickness: 7
+                        }).setOrigin(0.5).setScale(2.5).setAlpha(0);
+                        cutContainer.add(mwN);
+                        self.tweens.add({ targets: mwN, scaleX: 1, scaleY: 1, alpha: 1, duration: 200, ease: 'Back.easeOut' });
+                        self.tweens.add({ targets: mwN, alpha: 0, scaleX: 0.5, duration: 250, delay: 300 });
+                    });
+                })(mwi);
+            }
+
+            // = 56 reveal
+            this.time.delayedCall(2400, function() {
+                self.cameras.main.flash(200, 245, 200, 50);
+                var ansMW = self.add.text(w/2, h/2 - 60, '56!', {
+                    fontFamily: 'Nunito', fontSize: '100px', fontStyle: '900', color: '#f5c842', stroke: '#000', strokeThickness: 7
+                }).setOrigin(0.5).setScale(0);
+                cutContainer.add(ansMW);
+                self.tweens.add({ targets: ansMW, scaleX: 1, scaleY: 1, duration: 500, ease: 'Back.easeOut' });
+
+                var subMW = self.add.text(w/2, h/2 + 20, '8 × 7 = 56', {
+                    fontFamily: 'Nunito', fontSize: '36px', fontStyle: '800', color: '#ffffff', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5).setAlpha(0);
+                cutContainer.add(subMW);
+                self.tweens.add({ targets: subMW, alpha: 1, duration: 400, delay: 300 });
+
+                var mnMW = self.add.text(w/2, h - 50, 'Flip it around — 8×7 is still 56!', {
+                    fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#ffaaff', stroke: '#000', strokeThickness: 3
+                }).setOrigin(0.5).setAlpha(0);
+                cutContainer.add(mnMW);
+                self.tweens.add({ targets: mnMW, alpha: 1, duration: 400, delay: 500 });
+            });
+
+            this.time.delayedCall(4200, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 81 ÷ 9 = 9 — "THE MIRROR"
+        // Memory anchor: 9 looks at itself — 81÷9 = 9. Nine is its own reflection.
+        // Designed for ADHD: visual pattern recognition, symmetry, "aha" moment
+        // ================================================================
+        } else if (type === 'mirror') {
+            this.playedMirror = true;
+            try { self.sound.play('sfx-levelup', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var uMir = new SpeechSynthesisUtterance('The mirror...');
+                    uMir.rate = 0.7; uMir.pitch = 1.0; uMir.volume = 0.8;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(uMir);
+                }
+            } catch(e) {}
+
+            // Serene dark bg
+            var bgMir = this.add.rectangle(w/2, h/2, w, h, 0x0a0a2a, 0).setAlpha(0);
+            cutContainer.add(bgMir);
+            this.tweens.add({ targets: bgMir, alpha: 0.95, duration: 500 });
+
+            // Mirror frame (ornate rectangle)
+            var mirFrame = this.add.rectangle(w/2, h/2, 260, 340, 0x222244, 0.4)
+                .setStrokeStyle(6, 0xf5c842, 0.8).setAlpha(0);
+            cutContainer.add(mirFrame);
+            this.tweens.add({ targets: mirFrame, alpha: 1, duration: 600, delay: 300 });
+
+            // Mirror shine line
+            var mirShine = this.add.rectangle(w/2 - 80, h/2 - 100, 4, 180, 0xffffff, 0.15).setAngle(15).setAlpha(0);
+            cutContainer.add(mirShine);
+            this.tweens.add({ targets: mirShine, alpha: 0.2, x: w/2 + 80, duration: 2000, delay: 800, ease: 'Sine.easeInOut' });
+
+            // Left side: Big "9"
+            var nineLeft = this.add.text(w/2 - 60, h/2, '9', {
+                fontFamily: 'Nunito', fontSize: '120px', fontStyle: '900', color: '#88aaff',
+                stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(nineLeft);
+            this.tweens.add({ targets: nineLeft, alpha: 1, duration: 600, delay: 500 });
+
+            // Mirror dividing line (vertical)
+            var mirLine = this.add.rectangle(w/2, h/2, 3, 280, 0xf5c842, 0.6).setAlpha(0);
+            cutContainer.add(mirLine);
+            this.tweens.add({ targets: mirLine, alpha: 1, duration: 400, delay: 700 });
+
+            // Right side: Reflection "9" — appears after a beat (the reveal!)
+            var nineRight = this.add.text(w/2 + 60, h/2, '9', {
+                fontFamily: 'Nunito', fontSize: '120px', fontStyle: '900', color: '#88aaff',
+                stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(nineRight);
+            // Delayed reveal — the "aha" moment
+            this.time.delayedCall(1400, function() {
+                self.tweens.add({ targets: nineRight, alpha: 0.6, duration: 800, ease: 'Sine.easeIn' });
+                // Gentle glow when reflection appears
+                var glow = self.add.circle(w/2, h/2, 150, 0x88aaff, 0.08);
+                cutContainer.add(glow);
+                self.tweens.add({ targets: glow, alpha: 0.15, duration: 800, yoyo: true, repeat: 2 });
+            });
+
+            // Both nines pulse together (synchronized — like a heartbeat)
+            this.time.delayedCall(2200, function() {
+                self.tweens.add({ targets: [nineLeft, nineRight], scaleX: 1.1, scaleY: 1.1, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            });
+
+            // "THE MIRROR" title — quiet, reverent
+            var titleMir = this.add.text(w/2, 70, 'THE MIRROR', {
+                fontFamily: 'Nunito', fontSize: '42px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 5, letterSpacing: 8
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(titleMir);
+            this.tweens.add({ targets: titleMir, alpha: 1, duration: 800, delay: 400 });
+
+            // Equation
+            var eqMir = this.add.text(w/2, h/2 + 200, '81 ÷ 9 = 9', {
+                fontFamily: 'Nunito', fontSize: '38px', fontStyle: '900', color: '#ffffff', stroke: '#000', strokeThickness: 4
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eqMir);
+            this.tweens.add({ targets: eqMir, alpha: 1, duration: 600, delay: 1800 });
+
+            // Mnemonic — the teaching moment
+            var mnMir = this.add.text(w/2, h - 60, 'Nine looks in the mirror and sees... itself.\n81 ÷ 9 = 9. Always.', {
+                fontFamily: 'Nunito', fontSize: '16px', fontStyle: '700', color: '#aabbdd',
+                stroke: '#000', strokeThickness: 3, align: 'center'
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mnMir);
+            this.tweens.add({ targets: mnMir, alpha: 1, duration: 600, delay: 2400 });
+
+            // Gentle sparkles (not chaotic — calm and beautiful)
+            this.time.delayedCall(1000, function() {
+                for (var sp = 0; sp < 15; sp++) {
+                    var spx = Phaser.Math.Between(w/2 - 120, w/2 + 120);
+                    var spy = Phaser.Math.Between(h/2 - 150, h/2 + 150);
+                    var sparkle = self.add.circle(spx, spy, 2, 0xffffff, 0);
+                    cutContainer.add(sparkle);
+                    self.tweens.add({ targets: sparkle, alpha: 0.6, duration: 600, yoyo: true, repeat: 2, delay: sp * 200, ease: 'Sine.easeInOut' });
+                }
+            });
+
+            this.time.delayedCall(5000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 600, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 5 × 8 = 40 — "THE BIG 4-0!"
+        // Memory anchor: 40 = "over the hill" — funny aging moment
+        // ================================================================
+        } else if (type === 'big40') {
+            this.played40 = true;
+            try { self.sound.play('sfx-party', { volume: 0.6 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u40 = new SpeechSynthesisUtterance('The big four oh!');
+                    u40.rate = 0.75; u40.pitch = 0.8; u40.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u40);
+                }
+            } catch(e) {}
+
+            // Warm sepia bg
+            var bg40 = this.add.rectangle(w/2, h/2, w, h, 0x1a1a0a, 0).setAlpha(0);
+            cutContainer.add(bg40);
+            this.tweens.add({ targets: bg40, alpha: 0.92, duration: 300 });
+
+            // Hiro with "old man" touches — scaled up, slightly hunched (tilted)
+            var hiroOld = this.add.sprite(w/2, h/2 + 60, 'hiro-walk', 0).setScale(8).setAlpha(0).setAngle(-3);
+            cutContainer.add(hiroOld);
+            this.tweens.add({ targets: hiroOld, alpha: 1, duration: 400, delay: 300 });
+
+            // Walking cane (line + circle handle)
+            var caneX = w/2 + 55;
+            var cane = this.add.line(0, 0, caneX, h/2 + 20, caneX, h/2 + 120, 0x8B4513, 1).setLineWidth(4).setAlpha(0);
+            var caneTop = this.add.circle(caneX, h/2 + 18, 8, 0x8B4513).setStrokeStyle(2, 0x654321).setAlpha(0);
+            cutContainer.add(cane); cutContainer.add(caneTop);
+            this.tweens.add({ targets: [cane, caneTop], alpha: 1, duration: 300, delay: 500 });
+
+            // Reading glasses (two circles on Hiro's face)
+            var glassL = this.add.circle(w/2 - 14, h/2 + 42, 10, 0xffffff, 0.15).setStrokeStyle(2, 0xaaaaaa).setAlpha(0);
+            var glassR = this.add.circle(w/2 + 14, h/2 + 42, 10, 0xffffff, 0.15).setStrokeStyle(2, 0xaaaaaa).setAlpha(0);
+            var glassBridge = this.add.line(0, 0, w/2 - 4, h/2 + 42, w/2 + 4, h/2 + 42, 0xaaaaaa, 0.8).setLineWidth(1.5).setAlpha(0);
+            cutContainer.add(glassL); cutContainer.add(glassR); cutContainer.add(glassBridge);
+            this.tweens.add({ targets: [glassL, glassR, glassBridge], alpha: 1, duration: 300, delay: 700 });
+
+            // "THE BIG 4-0!" title
+            var title40 = this.add.text(w/2, 80, 'THE BIG 4-0!', {
+                fontFamily: 'Nunito', fontSize: '52px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 6
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(title40);
+            this.tweens.add({ targets: title40, scaleX: 1, scaleY: 1, duration: 500, delay: 200, ease: 'Back.easeOut' });
+
+            // "5 × 8 = 40" equation
+            var eq40 = this.add.text(w/2, 165, '5 × 8 = 40', {
+                fontFamily: 'Nunito', fontSize: '42px', fontStyle: '900', color: '#ffffff', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eq40);
+            this.tweens.add({ targets: eq40, alpha: 1, duration: 400, delay: 800 });
+
+            // "OVER THE HILL" banner
+            var hillBanner = this.add.rectangle(w/2, h/2 - 60, 280, 40, 0x000000, 0.6).setStrokeStyle(2, 0xf5c842, 0.5).setAlpha(0);
+            var hillText = this.add.text(w/2, h/2 - 60, 'OVER THE HILL', {
+                fontFamily: 'Nunito', fontSize: '22px', fontStyle: '800', color: '#f5c842'
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(hillBanner); cutContainer.add(hillText);
+            this.tweens.add({ targets: [hillBanner, hillText], alpha: 1, duration: 400, delay: 1000 });
+
+            // Mnemonic
+            var mn40 = this.add.text(w/2, h - 50, 'Five eights hit the big 4-0. Happy birthday, math!', {
+                fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#ccaa77', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mn40);
+            this.tweens.add({ targets: mn40, alpha: 1, duration: 400, delay: 1200 });
+
+            // Slow confetti (birthday but mellow)
+            this.time.delayedCall(500, function() {
+                for (var c40 = 0; c40 < 20; c40++) {
+                    var cx40 = Phaser.Math.Between(30, w - 30);
+                    var cc40 = [0xf5c842, 0xaaaaaa, 0x8B4513, 0xffffff][c40 % 4];
+                    var cf40 = self.add.circle(cx40, -10, Phaser.Math.Between(3, 6), cc40, 0.6);
+                    cutContainer.add(cf40);
+                    self.tweens.add({ targets: cf40, y: Phaser.Math.Between(150, h - 80), duration: Phaser.Math.Between(2000, 3500), ease: 'Sine.easeOut' });
+                }
+            });
+
+            this.time.delayedCall(4000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 2 × 2 = 4 — "TOO EASY!"
+        // Memory anchor: So easy it solves itself. Confidence booster.
+        // Designed for ADHD: quick dopamine hit, humor, self-efficacy
+        // ================================================================
+        } else if (type === 'tooeasy') {
+            this.playedEasy = true;
+            try { self.sound.play('sfx-correct', { volume: 0.8 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var uEZ = new SpeechSynthesisUtterance('Too easy!');
+                    uEZ.rate = 1.2; uEZ.pitch = 1.6; uEZ.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(uEZ);
+                }
+            } catch(e) {}
+
+            // Clean white bg (contrast — it's so easy it's bright)
+            var bgEZ = this.add.rectangle(w/2, h/2, w, h, 0xffffff, 0).setAlpha(0);
+            cutContainer.add(bgEZ);
+            this.tweens.add({ targets: bgEZ, alpha: 0.9, duration: 150 });
+
+            // Giant yawning Hiro
+            var hiroEZ = this.add.sprite(w/2, h/2 + 40, 'hiro-walk', 0).setScale(10).setAlpha(0);
+            cutContainer.add(hiroEZ);
+            this.tweens.add({ targets: hiroEZ, alpha: 1, duration: 200, delay: 100 });
+
+            // ZZZ floating up (yawning/bored)
+            var zChars = ['Z', 'z', 'Z'];
+            for (var zi = 0; zi < 3; zi++) {
+                (function(idx) {
+                    var zz = self.add.text(w/2 + 70 + idx * 15, h/2 + 10 - idx * 25, zChars[idx], {
+                        fontFamily: 'Nunito', fontSize: (20 + idx * 8) + 'px', fontStyle: '900', color: '#4444ff',
+                        stroke: '#ffffff', strokeThickness: 2
+                    }).setOrigin(0.5).setAlpha(0);
+                    cutContainer.add(zz);
+                    self.tweens.add({ targets: zz, alpha: 0.8, y: h/2 - 30 - idx * 30, duration: 800, delay: 300 + idx * 300, ease: 'Sine.easeOut' });
+                    self.tweens.add({ targets: zz, alpha: 0, duration: 400, delay: 800 + idx * 300 });
+                })(zi);
+            }
+
+            // "TOO EASY!" — slams in fast
+            var titleEZ = this.add.text(w/2, 120, 'TOO EASY!', {
+                fontFamily: 'Nunito', fontSize: '60px', fontStyle: '900', color: '#22aa44',
+                stroke: '#ffffff', strokeThickness: 4
+            }).setOrigin(0.5).setScale(3).setAlpha(0);
+            cutContainer.add(titleEZ);
+            this.tweens.add({ targets: titleEZ, scaleX: 1, scaleY: 1, alpha: 1, duration: 200, delay: 100, ease: 'Back.easeOut' });
+
+            // "2 × 2 = 4" — appears instantly, casually
+            var eqEZ = this.add.text(w/2, h/2 - 40, '2 × 2 = 4', {
+                fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#333333'
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eqEZ);
+            this.tweens.add({ targets: eqEZ, alpha: 1, duration: 200, delay: 300 });
+
+            // Checkmark slam
+            var check = this.add.text(w/2 + 120, h/2 - 40, '\u2713', {
+                fontFamily: 'Nunito', fontSize: '60px', fontStyle: '900', color: '#22aa44'
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(check);
+            this.tweens.add({ targets: check, scaleX: 1, scaleY: 1, duration: 200, delay: 500, ease: 'Back.easeOut' });
+
+            // "NEXT!" text
+            var nextEZ = this.add.text(w/2, h - 70, 'Baby stuff. NEXT!', {
+                fontFamily: 'Nunito', fontSize: '20px', fontStyle: '800', color: '#666666'
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(nextEZ);
+            this.tweens.add({ targets: nextEZ, alpha: 1, duration: 300, delay: 600 });
+
+            // Quick — only 2 seconds total (it's TOO EASY to need more time)
+            this.time.delayedCall(2000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 200, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 6 × 8 = 48 — "FOUR ATE!"
+        // Memory anchor: "FOUR ATE" = 48. Visual joke: the number 4 literally eats an 8.
+        // Designed for ADHD: absurd humor, visual pun, unforgettable image
+        // ================================================================
+        } else if (type === 'fourate') {
+            this.played48 = true;
+            try { self.sound.play('sfx-party', { volume: 0.7 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var u48 = new SpeechSynthesisUtterance('The four... ATE the eight!');
+                    u48.rate = 0.8; u48.pitch = 1.3; u48.volume = 1.0;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u48);
+                }
+            } catch(e) {}
+
+            // Fun bg
+            var bg48 = this.add.rectangle(w/2, h/2, w, h, 0x1a0a0a, 0).setAlpha(0);
+            cutContainer.add(bg48);
+            this.tweens.add({ targets: bg48, alpha: 0.92, duration: 300 });
+
+            // The "8" — sitting there innocently on the right
+            var eight48 = this.add.text(w/2 + 80, h/2, '8', {
+                fontFamily: 'Nunito', fontSize: '120px', fontStyle: '900', color: '#4488ff',
+                stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5);
+            cutContainer.add(eight48);
+
+            // The "4" — starts on the left, with a BIG mouth (wide opening)
+            var four48 = this.add.text(w/2 - 120, h/2, '4', {
+                fontFamily: 'Nunito', fontSize: '140px', fontStyle: '900', color: '#ff4444',
+                stroke: '#000', strokeThickness: 6
+            }).setOrigin(0.5);
+            cutContainer.add(four48);
+
+            // Eyes on the 4 (cartoonish — makes it a character)
+            var eyeL48 = this.add.circle(w/2 - 130, h/2 - 30, 8, 0xffffff).setStrokeStyle(1, 0x000000);
+            var pupilL48 = this.add.circle(w/2 - 127, h/2 - 30, 4, 0x000000);
+            var eyeR48 = this.add.circle(w/2 - 110, h/2 - 30, 8, 0xffffff).setStrokeStyle(1, 0x000000);
+            var pupilR48 = this.add.circle(w/2 - 107, h/2 - 30, 4, 0x000000);
+            cutContainer.add(eyeL48); cutContainer.add(pupilL48); cutContainer.add(eyeR48); cutContainer.add(pupilR48);
+            // Eyes look at the 8 (pupils shift right)
+            this.tweens.add({ targets: [pupilL48, pupilR48], x: '+=4', duration: 600, delay: 400 });
+
+            // 4 charges toward the 8!
+            this.time.delayedCall(1000, function() {
+                // 4 lunges right
+                self.tweens.add({ targets: four48, x: w/2 + 80, duration: 400, ease: 'Power3' });
+                self.tweens.add({ targets: [eyeL48, pupilL48, eyeR48, pupilR48], x: '+=200', duration: 400, ease: 'Power3' });
+                // 4 grows (eating!)
+                self.tweens.add({ targets: four48, scaleX: 1.3, scaleY: 1.3, duration: 300, delay: 300 });
+            });
+
+            // 8 shrinks (being eaten!)
+            this.time.delayedCall(1300, function() {
+                self.tweens.add({ targets: eight48, scaleX: 0, scaleY: 0, alpha: 0, duration: 400, ease: 'Back.easeIn' });
+                self.cameras.main.shake(200, 0.02);
+            });
+
+            // 4 burps (scale pulse) then becomes 48
+            this.time.delayedCall(1900, function() {
+                self.tweens.add({ targets: four48, scaleX: 1.5, scaleY: 0.8, duration: 150, yoyo: true, onComplete: function() {
+                    // Transform into 48!
+                    four48.setText('48');
+                    four48.setColor('#f5c842');
+                    four48.setFontSize(110);
+                    self.tweens.add({ targets: four48, scaleX: 1, scaleY: 1, duration: 300, ease: 'Back.easeOut' });
+                    // Eyes disappear (merged into the number)
+                    self.tweens.add({ targets: [eyeL48, pupilL48, eyeR48, pupilR48], alpha: 0, duration: 200 });
+                }});
+            });
+
+            // "FOUR ATE!" title
+            var title48 = this.add.text(w/2, 80, 'FOUR ATE!', {
+                fontFamily: 'Nunito', fontSize: '56px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 6
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(title48);
+            this.tweens.add({ targets: title48, scaleX: 1, scaleY: 1, duration: 500, delay: 2200, ease: 'Back.easeOut' });
+            this.tweens.add({ targets: title48, scaleX: 1.05, scaleY: 1.05, duration: 300, yoyo: true, repeat: -1, delay: 2700 });
+
+            // Equation
+            var eq48 = this.add.text(w/2, 170, '6 × 8 = 48', {
+                fontFamily: 'Nunito', fontSize: '36px', fontStyle: '800', color: '#ffffff', stroke: '#000', strokeThickness: 4
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(eq48);
+            this.tweens.add({ targets: eq48, alpha: 1, duration: 400, delay: 2400 });
+
+            // Mnemonic
+            var mn48 = this.add.text(w/2, h - 50, 'The FOUR ATE the eight — 48!', {
+                fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#ffaaaa', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mn48);
+            this.tweens.add({ targets: mn48, alpha: 1, duration: 400, delay: 2600 });
+
+            this.time.delayedCall(4500, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 400, onComplete: function() { cutContainer.destroy(true); callback(); } });
+            });
+
+        // ================================================================
+        // 72 ÷ 8 = 9 — "FULL CIRCLE"
+        // Memory anchor: Clock face — 72 hours = 3 days = the clock goes full circle
+        // ================================================================
+        } else if (type === 'circle') {
+            this.playedCircle = true;
+            try { self.sound.play('sfx-levelup', { volume: 0.6 }); } catch(e) {}
+            try {
+                if ('speechSynthesis' in window && !gameMuted) {
+                    var uCirc = new SpeechSynthesisUtterance('Full circle!');
+                    uCirc.rate = 0.85; uCirc.pitch = 1.2; uCirc.volume = 0.9;
+                    window.speechSynthesis.cancel(); window.speechSynthesis.speak(uCirc);
+                }
+            } catch(e) {}
+
+            // Dark elegant bg
+            var bgCirc = this.add.rectangle(w/2, h/2, w, h, 0x0a0a1a, 0).setAlpha(0);
+            cutContainer.add(bgCirc);
+            this.tweens.add({ targets: bgCirc, alpha: 0.93, duration: 400 });
+
+            // Clock face — big circle
+            var clockR = 130;
+            var clockX = w/2, clockY = h/2 - 20;
+            var clockFace = this.add.circle(clockX, clockY, clockR, 0x111122, 0.8).setStrokeStyle(4, 0xf5c842, 0.9).setAlpha(0);
+            cutContainer.add(clockFace);
+            this.tweens.add({ targets: clockFace, alpha: 1, duration: 500, delay: 200 });
+
+            // Hour markers (12 dots around the clock)
+            for (var hr = 0; hr < 12; hr++) {
+                var hrAngle = (hr / 12) * Math.PI * 2 - Math.PI / 2;
+                var hrX = clockX + Math.cos(hrAngle) * (clockR - 18);
+                var hrY = clockY + Math.sin(hrAngle) * (clockR - 18);
+                var hrDot = this.add.circle(hrX, hrY, hr % 3 === 0 ? 5 : 3, 0xf5c842, 0.8).setAlpha(0);
+                cutContainer.add(hrDot);
+                this.tweens.add({ targets: hrDot, alpha: 1, duration: 200, delay: 300 + hr * 60 });
+            }
+
+            // Numbers at 12, 3, 6, 9 positions
+            var clockNums = [{n: '12', a: -Math.PI/2}, {n: '3', a: 0}, {n: '6', a: Math.PI/2}, {n: '9', a: Math.PI}];
+            for (var cn = 0; cn < 4; cn++) {
+                var cnX = clockX + Math.cos(clockNums[cn].a) * (clockR - 38);
+                var cnY = clockY + Math.sin(clockNums[cn].a) * (clockR - 38);
+                var cnTxt = this.add.text(cnX, cnY, clockNums[cn].n, {
+                    fontFamily: 'Nunito', fontSize: '22px', fontStyle: '800', color: '#f5c842'
+                }).setOrigin(0.5).setAlpha(0);
+                cutContainer.add(cnTxt);
+                this.tweens.add({ targets: cnTxt, alpha: 1, duration: 200, delay: 400 + cn * 100 });
+            }
+
+            // Clock hand — starts at 12, spins full circle to land on 9
+            var handLen = clockR - 40;
+            var handEndX = clockX + Math.cos(-Math.PI/2) * handLen;
+            var handEndY = clockY + Math.sin(-Math.PI/2) * handLen;
+            var clockHand = this.add.line(0, 0, clockX, clockY, handEndX, handEndY, 0xffffff, 0.9).setLineWidth(3).setAlpha(0);
+            cutContainer.add(clockHand);
+            this.tweens.add({ targets: clockHand, alpha: 1, duration: 200, delay: 800 });
+
+            // Spin the hand! Full 360° rotation then stop at 9 o'clock position
+            var handAngle = { val: -Math.PI / 2 }; // start at 12
+            this.time.delayedCall(1000, function() {
+                self.tweens.add({
+                    targets: handAngle, val: Math.PI * 1.5 + Math.PI, // full circle + stop at 9 (π position)
+                    duration: 2000, ease: 'Cubic.easeInOut',
+                    onUpdate: function() {
+                        var ex = clockX + Math.cos(handAngle.val) * handLen;
+                        var ey = clockY + Math.sin(handAngle.val) * handLen;
+                        clockHand.setTo(clockX, clockY, ex, ey);
+                    },
+                    onComplete: function() {
+                        // Glow on the 9
+                        var nineGlow = self.add.circle(clockX + Math.cos(Math.PI) * (clockR - 38), clockY + Math.sin(Math.PI) * (clockR - 38), 25, 0xf5c842, 0.3);
+                        cutContainer.add(nineGlow);
+                        self.tweens.add({ targets: nineGlow, alpha: 0.6, scaleX: 1.3, scaleY: 1.3, duration: 400, yoyo: true, repeat: 2 });
+                        self.cameras.main.shake(150, 0.015);
+                    }
+                });
+            });
+
+            // "FULL CIRCLE" title
+            var titleCirc = this.add.text(w/2, 50, 'FULL CIRCLE', {
+                fontFamily: 'Nunito', fontSize: '46px', fontStyle: '900', color: '#f5c842',
+                stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(titleCirc);
+            this.tweens.add({ targets: titleCirc, alpha: 1, duration: 500, delay: 300 });
+
+            // Equation
+            var eqCirc = this.add.text(w/2, h/2 + 170, '72 ÷ 8 = 9', {
+                fontFamily: 'Nunito', fontSize: '42px', fontStyle: '900', color: '#ffffff', stroke: '#000', strokeThickness: 5
+            }).setOrigin(0.5).setScale(0);
+            cutContainer.add(eqCirc);
+            this.tweens.add({ targets: eqCirc, scaleX: 1, scaleY: 1, duration: 400, delay: 3200, ease: 'Back.easeOut' });
+
+            // Mnemonic
+            var mnCirc = this.add.text(w/2, h - 50, 'The clock goes full circle — 72 ÷ 8 lands on 9!', {
+                fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#aaccff', stroke: '#000', strokeThickness: 3
+            }).setOrigin(0.5).setAlpha(0);
+            cutContainer.add(mnCirc);
+            this.tweens.add({ targets: mnCirc, alpha: 1, duration: 400, delay: 3500 });
+
+            this.time.delayedCall(5000, function() {
+                self.tweens.add({ targets: cutContainer, alpha: 0, duration: 500, onComplete: function() { cutContainer.destroy(true); callback(); } });
             });
         }
     }
