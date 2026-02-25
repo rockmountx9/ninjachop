@@ -595,16 +595,16 @@ class SplashScene extends Phaser.Scene {
         var glow = this.add.circle(w/2, logoY, 80, 0xf5c842, 0).setDepth(0);
         this.tweens.add({ targets: glow, alpha: 0.08, scaleX: 1.5, scaleY: 1.5, duration: 1500, ease: 'Sine.easeOut' });
 
-        var spirited = this.add.text(w/2, logoY, 'SPIRITED MINDS', {
-            fontFamily: 'Nunito', fontSize: '34px', fontStyle: '900', color: '#f5c842',
+        var spirited = this.add.text(w/2, logoY, 'GIFTED YOUNGSTERS', {
+            fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#f5c842',
             stroke: '#000000', strokeThickness: 4
         }).setOrigin(0.5).setAlpha(0).setResolution(2);
         this.tweens.add({ targets: spirited, alpha: 1, duration: 1000, delay: 300, ease: 'Quad.easeOut' });
 
         // Subtitle
-        var subtitle = this.add.text(w/2, logoY + 50, 'a subsidiary of VanderEls Corp.', {
-            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '600', color: '#8888aa',
-            stroke: '#000000', strokeThickness: 2
+        var subtitle = this.add.text(w/2, logoY + 50, 'Apps made for ADHD and other\nNeurodivergent children', {
+            fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#8888aa',
+            stroke: '#000000', strokeThickness: 2, align: 'center', lineSpacing: 4
         }).setOrigin(0.5).setAlpha(0).setResolution(2);
         this.tweens.add({ targets: subtitle, alpha: 1, duration: 800, delay: 900, ease: 'Quad.easeOut' });
 
@@ -6495,76 +6495,55 @@ class ShopScene extends Phaser.Scene {
 
     create() {
         var w = this.scale.width, h = this.scale.height, self = this;
-        var gfx = this.add.graphics();
+        var gfx = this.add.graphics().setDepth(0);
 
         // === ROOM LAYOUT (Zelda-style overhead) ===
-        var wallT = 28; // wall thickness
-        var roomL = Math.max(20, (w - 480) / 2); // center room, max 480 wide
+        var wallT = 28;
+        var roomL = Math.max(20, (w - 480) / 2);
         var roomR = w - roomL;
         var roomT = 50, roomB = h - 10;
         var innerL = roomL + wallT, innerR = roomR - wallT;
         var innerT = roomT + wallT, innerB = roomB - wallT;
         var innerW = innerR - innerL, innerH = innerB - innerT;
         var cx = (innerL + innerR) / 2;
+        this.innerL = innerL; this.innerR = innerR;
+        this.innerT = innerT; this.innerB = innerB;
 
         // === BLACK BACKGROUND ===
         gfx.fillStyle(0x0a0a0a, 1);
         gfx.fillRect(0, 0, w, h);
 
-        // === STONE WALLS (thick border with brick texture) ===
+        // === STONE WALLS ===
         var brickW = 28, brickH = 14;
         var stoneA = 0x6a5a48, stoneB = 0x5a4a38, stoneC = 0x7a6a58;
-        var grout = 0x3a3228;
-        // Top wall
-        for (var by = roomT; by < innerT; by += brickH) {
-            var rowOff = ((by - roomT) / brickH) % 2 === 0 ? 0 : brickW / 2;
-            for (var bx = roomL; bx < roomR; bx += brickW) {
-                var bc = ((bx + by) * 7) % 3 === 0 ? stoneC : ((bx * 3 + by) % 2 === 0 ? stoneA : stoneB);
-                gfx.fillStyle(bc, 1);
-                gfx.fillRect(bx + rowOff, by, brickW - 2, brickH - 2);
+        var wallRects = [
+            [roomL, roomT, roomR - roomL, wallT],           // top
+            [roomL, innerB, roomR - roomL, wallT],           // bottom
+            [roomL, roomT, wallT, roomB - roomT],            // left
+            [innerR, roomT, wallT, roomB - roomT]            // right
+        ];
+        for (var wi = 0; wi < wallRects.length; wi++) {
+            var wr = wallRects[wi];
+            for (var by = wr[1]; by < wr[1] + wr[3]; by += brickH) {
+                var rowOff = (Math.floor((by - wr[1]) / brickH)) % 2 === 0 ? 0 : brickW / 2;
+                for (var bx = wr[0]; bx < wr[0] + wr[2]; bx += brickW) {
+                    var bc = ((bx + by) * 7) % 3 === 0 ? stoneC : ((bx * 3 + by) % 2 === 0 ? stoneA : stoneB);
+                    gfx.fillStyle(bc, 1);
+                    gfx.fillRect(bx + rowOff, by, brickW - 2, brickH - 2);
+                }
             }
         }
-        // Bottom wall
-        for (by = innerB; by < roomB; by += brickH) {
-            rowOff = ((by - innerB) / brickH) % 2 === 0 ? 0 : brickW / 2;
-            for (bx = roomL; bx < roomR; bx += brickW) {
-                bc = ((bx + by) * 7) % 3 === 0 ? stoneC : ((bx * 3 + by) % 2 === 0 ? stoneA : stoneB);
-                gfx.fillStyle(bc, 1);
-                gfx.fillRect(bx + rowOff, by, brickW - 2, brickH - 2);
-            }
-        }
-        // Left wall
-        for (by = roomT; by < roomB; by += brickH) {
-            rowOff = ((by - roomT) / brickH) % 2 === 0 ? 0 : brickW / 2;
-            for (bx = roomL; bx < innerL; bx += brickW) {
-                bc = ((bx + by) * 7) % 3 === 0 ? stoneC : ((bx * 3 + by) % 2 === 0 ? stoneA : stoneB);
-                gfx.fillStyle(bc, 1);
-                gfx.fillRect(bx + rowOff, by, brickW - 2, brickH - 2);
-            }
-        }
-        // Right wall
-        for (by = roomT; by < roomB; by += brickH) {
-            rowOff = ((by - roomT) / brickH) % 2 === 0 ? 0 : brickW / 2;
-            for (bx = innerR; bx < roomR; bx += brickW) {
-                bc = ((bx + by) * 7) % 3 === 0 ? stoneC : ((bx * 3 + by) % 2 === 0 ? stoneA : stoneB);
-                gfx.fillStyle(bc, 1);
-                gfx.fillRect(bx + rowOff, by, brickW - 2, brickH - 2);
-            }
-        }
-        // Inner edge highlight (room border)
         gfx.lineStyle(2, 0x8a7a60, 0.6);
         gfx.strokeRect(innerL, innerT, innerW, innerH);
 
-        // === WOODEN FLOOR (horizontal planks — Zelda style) ===
+        // === WOODEN FLOOR ===
         var plankH = 24;
         for (var py = innerT; py < innerB; py += plankH) {
             var pc = ((py - innerT) / plankH) % 2 === 0 ? 0x8a6a3a : 0x7a5a2a;
             gfx.fillStyle(pc, 1);
             gfx.fillRect(innerL, py, innerW, plankH - 2);
-            // Plank groove
             gfx.fillStyle(0x5a4020, 0.5);
             gfx.fillRect(innerL, py + plankH - 2, innerW, 2);
-            // Knot marks (sparse)
             if ((py * 7) % 5 === 0) {
                 var kx = innerL + ((py * 13) % (innerW - 20)) + 10;
                 gfx.fillStyle(0x6a4a20, 0.4);
@@ -6572,11 +6551,8 @@ class ShopScene extends Phaser.Scene {
             }
         }
 
-        // === BACK WALL AREA (darker, behind counter) ===
+        // === BACK WALL AREA ===
         var backWallH = innerH * 0.28;
-        gfx.fillStyle(0x4a3a28, 1);
-        gfx.fillRect(innerL, innerT, innerW, backWallH);
-        // Back wall planks (vertical, like Zelda)
         for (var vx = innerL; vx < innerR; vx += 20) {
             var vpc = ((vx - innerL) / 20) % 2 === 0 ? 0x4a3a28 : 0x3a2a18;
             gfx.fillStyle(vpc, 1);
@@ -6585,20 +6561,17 @@ class ShopScene extends Phaser.Scene {
             gfx.fillRect(vx + 18, innerT, 2, backWallH);
         }
 
-        // === COUNTER (horizontal, Zelda style) ===
+        // === COUNTER ===
         var counterY = innerT + backWallH;
         var counterH = 18;
-        // Counter top surface
+        var counterFrontY = counterY + counterH + 10;
+        this.counterFrontY = counterFrontY;
         gfx.fillStyle(0x5a3a1a, 1);
         gfx.fillRect(innerL + 10, counterY, innerW - 20, counterH);
-        // Counter edge highlight
         gfx.fillStyle(0x7a5a2a, 1);
         gfx.fillRect(innerL + 10, counterY, innerW - 20, 4);
-        // Counter front face (visible below top)
         gfx.fillStyle(0x4a2a0a, 1);
         gfx.fillRect(innerL + 10, counterY + counterH, innerW - 20, 10);
-        gfx.fillStyle(0x3a1a00, 0.4);
-        gfx.fillRect(innerL + 10, counterY + counterH + 8, innerW - 20, 2);
 
         // === ITEMS ON COUNTER ===
         this.shopItems = [
@@ -6613,29 +6586,23 @@ class ShopScene extends Phaser.Scene {
 
         var itemSpacing = innerW / 5;
         var itemY = innerT + backWallH / 2;
-        var itemPositions = [];
+        this.itemPositions = [];
         for (var si = 0; si < 4; si++) {
-            var ix = innerL + itemSpacing * (si + 1);
-            itemPositions.push({ x: ix, y: itemY });
+            this.itemPositions.push({ x: innerL + itemSpacing * (si + 1), y: itemY });
         }
 
-        // Price labels on back wall (above items, like Zelda)
+        // Price labels on back wall
         for (si = 0; si < this.shopItems.length; si++) {
-            var item = this.shopItems[si];
-            var ip = itemPositions[si];
-            // Price text
-            this.add.text(ip.x, innerT + 12, '' + item.cost, {
+            this.add.text(this.itemPositions[si].x, innerT + 12, '' + this.shopItems[si].cost, {
                 fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff',
                 stroke: '#000000', strokeThickness: 3
             }).setOrigin(0.5, 0).setDepth(5);
         }
-
-        // Item display objects on counter
         for (si = 0; si < this.shopItems.length; si++) {
-            this.createShelfItem(this.shopItems[si], itemPositions[si]);
+            this.createShelfItem(this.shopItems[si], this.itemPositions[si]);
         }
 
-        // === MERCHANT (behind counter, right side) ===
+        // === MERCHANT ===
         var merchX = innerR - 40, merchY = counterY - 10;
         this.merchantSprite = this.add.sprite(merchX, merchY, 'npc-merchant', 0).setScale(3).setDepth(4);
         if (this.anims.exists('npc-merchant-idle')) this.merchantSprite.play('npc-merchant-idle');
@@ -6643,7 +6610,6 @@ class ShopScene extends Phaser.Scene {
             fontFamily: 'Nunito', fontSize: '11px', fontStyle: '700', color: '#f5c842',
             stroke: '#000000', strokeThickness: 2
         }).setOrigin(0.5).setDepth(5);
-        // Speech bubble
         var bubGfx = this.add.graphics().setDepth(6);
         bubGfx.fillStyle(0xffffff, 0.9);
         bubGfx.fillRoundedRect(merchX - 60, merchY - 54, 80, 22, 6);
@@ -6652,66 +6618,101 @@ class ShopScene extends Phaser.Scene {
             fontFamily: 'Nunito', fontSize: '11px', fontStyle: '800', color: '#333333'
         }).setOrigin(0.5).setDepth(7);
 
-        // === HIRO (bottom half, facing up) ===
-        var heroY = counterY + counterH + (innerB - counterY - counterH) * 0.55;
-        var hiro = this.add.sprite(cx, heroY, 'hiro-walk', 1).setScale(3).setDepth(5);
-        // Face up (frame 1 = up in walk sheet)
+        // === LANTERNS ===
+        var lanterns = [{ x: innerL + 18, y: innerT + 14 }, { x: innerR - 18, y: innerT + 14 }];
+        for (var li = 0; li < lanterns.length; li++) {
+            var lp = lanterns[li];
+            gfx.fillStyle(0x555555, 1); gfx.fillRect(lp.x - 5, lp.y, 10, 14);
+            gfx.fillStyle(0x444444, 1); gfx.fillRect(lp.x - 7, lp.y - 2, 14, 3);
+            var flame = this.add.circle(lp.x, lp.y + 6, 4, 0xff8800, 0.8).setDepth(3);
+            this.tweens.add({ targets: flame, scaleX: { from: 0.7, to: 1.3 }, scaleY: { from: 0.9, to: 1.3 }, alpha: { from: 0.6, to: 1.0 }, duration: 350, yoyo: true, repeat: -1, delay: li * 180 });
+            var flameGlow = this.add.circle(lp.x, lp.y + 6, 22, 0xff8800, 0.06).setDepth(2);
+            this.tweens.add({ targets: flameGlow, alpha: { from: 0.04, to: 0.1 }, scaleX: { from: 0.9, to: 1.15 }, scaleY: { from: 0.9, to: 1.15 }, duration: 500, yoyo: true, repeat: -1 });
+        }
 
         // === EXIT DOOR (bottom wall, center) ===
         var doorW = 40, doorH = wallT + 8;
         var doorX = cx - doorW / 2, doorY = innerB - 4;
-        gfx.fillStyle(0x5a3a1a, 1);
-        gfx.fillRect(doorX, doorY, doorW, doorH);
-        gfx.fillStyle(0x4a2a0a, 1);
-        gfx.fillRect(doorX + 4, doorY + 4, doorW - 8, doorH - 4);
-        gfx.fillStyle(0xccaa44, 1);
-        gfx.fillCircle(doorX + doorW - 10, doorY + doorH / 2, 3);
-        var exitZone = this.add.rectangle(cx, doorY + doorH / 2, doorW + 20, doorH + 20, 0x000000, 0)
-            .setInteractive({ useHandCursor: true }).setDepth(10);
+        gfx.fillStyle(0x5a3a1a, 1); gfx.fillRect(doorX, doorY, doorW, doorH);
+        gfx.fillStyle(0x4a2a0a, 1); gfx.fillRect(doorX + 4, doorY + 4, doorW - 8, doorH - 4);
+        gfx.fillStyle(0xccaa44, 1); gfx.fillCircle(doorX + doorW - 10, doorY + doorH / 2, 3);
         var exitLabel = this.add.text(cx, doorY - 8, 'EXIT', {
             fontFamily: 'Nunito', fontSize: '14px', fontStyle: '800', color: '#ccaa44',
             stroke: '#000000', strokeThickness: 3
         }).setOrigin(0.5).setDepth(10);
         this.tweens.add({ targets: exitLabel, y: doorY - 12, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        exitZone.on('pointerup', function() {
-            self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
-        });
-
-        // === LANTERNS (on back wall, left and right) ===
-        var lanterns = [{ x: innerL + 18, y: innerT + 14 }, { x: innerR - 18, y: innerT + 14 }];
-        for (var li = 0; li < lanterns.length; li++) {
-            var lp = lanterns[li];
-            gfx.fillStyle(0x555555, 1);
-            gfx.fillRect(lp.x - 5, lp.y, 10, 14);
-            gfx.fillStyle(0x444444, 1);
-            gfx.fillRect(lp.x - 7, lp.y - 2, 14, 3);
-            var flame = this.add.circle(lp.x, lp.y + 6, 4, 0xff8800, 0.8).setDepth(3);
-            this.tweens.add({
-                targets: flame, scaleX: { from: 0.7, to: 1.3 }, scaleY: { from: 0.9, to: 1.3 },
-                alpha: { from: 0.6, to: 1.0 }, duration: 350, yoyo: true, repeat: -1, delay: li * 180
-            });
-            var flameGlow = this.add.circle(lp.x, lp.y + 6, 22, 0xff8800, 0.06).setDepth(2);
-            this.tweens.add({
-                targets: flameGlow, alpha: { from: 0.04, to: 0.1 }, scaleX: { from: 0.9, to: 1.15 },
-                scaleY: { from: 0.9, to: 1.15 }, duration: 500, yoyo: true, repeat: -1
-            });
-        }
+        // Exit zone for physics overlap
+        this.exitZone = this.add.zone(cx, innerB + 4, doorW + 10, 20);
+        this.physics.add.existing(this.exitZone, true);
 
         // === DUST MOTES ===
         for (var di = 0; di < 6; di++) {
             var mote = this.add.circle(
                 Phaser.Math.Between(innerL + 20, innerR - 20),
-                Phaser.Math.Between(counterY + 30, innerB - 30),
+                Phaser.Math.Between(counterFrontY + 10, innerB - 30),
                 Phaser.Math.FloatBetween(1, 2.5), 0xf5c842, 0.25
             ).setDepth(8);
-            this.tweens.add({
-                targets: mote, x: mote.x + Phaser.Math.Between(-25, 25),
-                y: mote.y - Phaser.Math.Between(10, 30),
-                alpha: { from: 0.15, to: 0.35 },
-                duration: Phaser.Math.Between(3000, 5000),
-                yoyo: true, repeat: -1, delay: di * 400
-            });
+            this.tweens.add({ targets: mote, x: mote.x + Phaser.Math.Between(-25, 25), y: mote.y - Phaser.Math.Between(10, 30), alpha: { from: 0.15, to: 0.35 }, duration: Phaser.Math.Between(3000, 5000), yoyo: true, repeat: -1, delay: di * 400 });
         }
+
+        // === BREAKABLE JARS ===
+        this.jars = [];
+        var jarGfx = this.add.graphics().setDepth(4);
+        var floorMidY = counterFrontY + (innerB - counterFrontY) / 2;
+        var jarPositions = [
+            { x: innerL + 30, y: counterFrontY + 30 },
+            { x: innerR - 30, y: counterFrontY + 25 },
+            { x: innerL + 50, y: floorMidY + 40 },
+            { x: innerR - 50, y: floorMidY + 20 },
+            { x: cx + 60, y: floorMidY - 10 }
+        ];
+        for (var ji = 0; ji < jarPositions.length; ji++) {
+            var jp = jarPositions[ji];
+            var hasCoins = ji < 2; // first 2 jars have coins
+            var coinAmt = hasCoins ? Phaser.Math.Between(1, 3) : 0;
+            this.drawJar(jarGfx, jp.x, jp.y);
+            // Shadow
+            var shadow = this.add.ellipse(jp.x, jp.y + 14, 22, 8, 0x000000, 0.25).setDepth(3);
+            // Physics body for collision
+            var jarBody = this.add.rectangle(jp.x, jp.y, 20, 24, 0x000000, 0).setDepth(0);
+            this.physics.add.existing(jarBody, true);
+            this.jars.push({ x: jp.x, y: jp.y, alive: true, body: jarBody, shadow: shadow, coins: coinAmt, idx: ji });
+        }
+
+        // === PLAYER (physics-enabled, walkable) ===
+        var spawnY = floorMidY + 60;
+        this.player = this.physics.add.sprite(cx, spawnY, 'hiro-idle', 0).setScale(3).setDepth(10);
+        this.player.body.setSize(12, 12).setOffset(2, 4);
+        this.player.play('hiro-idle-down');
+        this.shadow = this.add.ellipse(cx, spawnY + 20, 30, 10, 0x000000, 0.25).setDepth(9);
+        this.facing = 'down';
+
+        // Physics bounds — walkable area below counter
+        var pad = 8;
+        this.physics.world.setBounds(innerL + pad, counterFrontY, innerW - pad * 2, innerB - counterFrontY - pad);
+        this.player.setCollideWorldBounds(true);
+
+        // Collide player with jar bodies
+        for (ji = 0; ji < this.jars.length; ji++) {
+            this.physics.add.collider(this.player, this.jars[ji].body);
+        }
+
+        // Exit overlap
+        this.exitTriggered = false;
+        this.physics.add.overlap(this.player, this.exitZone, function() {
+            if (self.exitTriggered) return;
+            self.exitTriggered = true;
+            self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
+        });
+
+        // Coin group
+        this.coinGroup = this.physics.add.group();
+        this.physics.add.overlap(this.player, this.coinGroup, function(player, coin) {
+            coin.destroy();
+            gameState.coins++;
+            self.coinDisplay.setText('' + gameState.coins);
+            try { self.sound.play('sfx-coin', { volume: 0.4 }); } catch(e) {}
+        });
 
         // === COIN COUNTER (top bar) ===
         this.add.rectangle(w/2, 25, w, 44, 0x1a1a2e, 0.9).setDepth(50);
@@ -6722,80 +6723,217 @@ class ShopScene extends Phaser.Scene {
             stroke: '#000000', strokeThickness: 3
         }).setOrigin(0, 0.5).setDepth(51);
 
-        // === SELECTION PANEL (bottom — hidden initially) ===
+        // === SELECTION PANEL (hidden initially) ===
         this.selPanel = this.add.container(0, h + 10).setDepth(60);
         var panelBg = this.add.rectangle(w/2, 0, w, 160, 0x16213e, 0.95).setStrokeStyle(2, COLORS.gold);
         this.selPanel.add(panelBg);
-        this.selName = this.add.text(w/2, -54, '', {
-            fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff',
-            stroke: '#000000', strokeThickness: 3
-        }).setOrigin(0.5);
+        this.selName = this.add.text(w/2, -54, '', { fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5);
         this.selPanel.add(this.selName);
-        this.selDesc = this.add.text(w/2, -28, '', {
-            fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#aabbcc'
-        }).setOrigin(0.5);
+        this.selDesc = this.add.text(w/2, -28, '', { fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#aabbcc' }).setOrigin(0.5);
         this.selPanel.add(this.selDesc);
-        this.selCost = this.add.text(w/2, -6, '', {
-            fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#f5c842'
-        }).setOrigin(0.5);
+        this.selCost = this.add.text(w/2, -6, '', { fontFamily: 'Nunito', fontSize: '17px', fontStyle: '700', color: '#f5c842' }).setOrigin(0.5);
         this.selPanel.add(this.selCost);
-        this.buyBtn = this.add.rectangle(w/2, 32, 140, 42, COLORS.green)
-            .setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff, 0.3);
+        this.buyBtn = this.add.rectangle(w/2, 32, 140, 42, COLORS.green).setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff, 0.3);
         this.selPanel.add(this.buyBtn);
-        var buyLabel = this.add.text(w/2, 32, 'BUY', {
-            fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff'
-        }).setOrigin(0.5);
-        this.selPanel.add(buyLabel);
+        this.selPanel.add(this.add.text(w/2, 32, 'BUY', { fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5));
         this.buyBtn.on('pointerover', function() { self.buyBtn.setScale(1.05); });
         this.buyBtn.on('pointerout', function() { self.buyBtn.setScale(1.0); });
-        this.buyBtn.on('pointerup', function() {
-            if (self.selectedItem) self.buyItem(self.selectedItem);
-        });
+        this.buyBtn.on('pointerup', function() { if (self.selectedItem) self.buyItem(self.selectedItem); });
 
         // Feedback text
-        this.feedbackText = this.add.text(w/2, heroY - 50, '', {
+        this.feedbackText = this.add.text(w/2, counterFrontY + 20, '', {
             fontFamily: 'Nunito', fontSize: '20px', fontStyle: '700', color: '#22c55e',
             stroke: '#000000', strokeThickness: 3
         }).setOrigin(0.5).setDepth(55);
 
-        // Keyboard exit
+        // === INPUT ===
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.wasd = this.input.keyboard.addKeys('W,S,A,D');
+        this.input.keyboard.on('keydown-SPACE', this.doAction, this);
         this.input.keyboard.on('keydown-ESC', function() {
             self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
         });
+
+        // Mobile touch controls
+        this.touchDir = { left: false, right: false, up: false, down: false };
+        this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        if (this.isMobile) this.createShopTouchControls();
+
+        // Jar graphics reference (for redrawing after breaks)
+        this.jarGfx = jarGfx;
+    }
+
+    drawJar(gfx, x, y) {
+        // Jar body (rounded brownish pot)
+        gfx.fillStyle(0x8a6a3a, 1);
+        gfx.fillRect(x - 8, y - 6, 16, 16);
+        gfx.fillStyle(0x9a7a4a, 1);
+        gfx.fillRect(x - 6, y - 10, 12, 6);
+        // Rim
+        gfx.fillStyle(0x6a4a2a, 1);
+        gfx.fillRect(x - 7, y - 11, 14, 3);
+        // Highlight
+        gfx.fillStyle(0xaa8a5a, 0.6);
+        gfx.fillRect(x - 5, y - 8, 4, 10);
+        // Dark base
+        gfx.fillStyle(0x5a3a1a, 1);
+        gfx.fillRect(x - 7, y + 8, 14, 3);
+    }
+
+    doAction() {
+        var px = this.player.x, py = this.player.y;
+
+        // Check if near counter — open item selection
+        if (py < this.counterFrontY + 30) {
+            var closest = null, closestDist = 999;
+            for (var i = 0; i < this.itemPositions.length; i++) {
+                var dx = Math.abs(px - this.itemPositions[i].x);
+                if (dx < closestDist) { closestDist = dx; closest = i; }
+            }
+            if (closest !== null && closestDist < 80) {
+                this.selectItem(this.shopItems[closest]);
+                return;
+            }
+        }
+
+        // Check if near a jar — break it
+        for (var j = 0; j < this.jars.length; j++) {
+            var jar = this.jars[j];
+            if (!jar.alive) continue;
+            var dist = Phaser.Math.Distance.Between(px, py, jar.x, jar.y);
+            if (dist < 40) {
+                this.breakJar(jar);
+                return;
+            }
+        }
+    }
+
+    breakJar(jar) {
+        jar.alive = false;
+        jar.body.destroy();
+        jar.shadow.destroy();
+
+        // Clear jar graphic area by redrawing floor patch
+        var patchGfx = this.add.graphics().setDepth(1);
+        patchGfx.fillStyle(0x8a6a3a, 1);
+        patchGfx.fillRect(jar.x - 12, jar.y - 14, 24, 28);
+
+        // Particle burst (shards flying out)
+        var shardColors = [0x8a6a3a, 0x9a7a4a, 0x6a4a2a, 0xaa8a5a];
+        for (var s = 0; s < 8; s++) {
+            var shard = this.add.rectangle(
+                jar.x, jar.y,
+                Phaser.Math.Between(3, 6), Phaser.Math.Between(3, 6),
+                shardColors[s % shardColors.length]
+            ).setDepth(12).setAngle(Phaser.Math.Between(0, 360));
+            this.tweens.add({
+                targets: shard,
+                x: jar.x + Phaser.Math.Between(-30, 30),
+                y: jar.y + Phaser.Math.Between(-25, 15),
+                alpha: 0, angle: Phaser.Math.Between(-180, 180),
+                duration: 400, ease: 'Quad.easeOut',
+                onComplete: function() { shard.destroy(); }
+            });
+        }
+
+        try { this.sound.play('sfx-slash', { volume: 0.4 }); } catch(e) {}
+
+        // Drop coins
+        if (jar.coins > 0) {
+            for (var c = 0; c < jar.coins; c++) {
+                var coin = this.coinGroup.create(
+                    jar.x + Phaser.Math.Between(-8, 8),
+                    jar.y + Phaser.Math.Between(-8, 8),
+                    'coin-spin', 0
+                ).setScale(1.2).setDepth(11);
+                coin.play('coin-spin-anim');
+                coin.body.setSize(12, 12);
+                // Bounce out slightly
+                this.tweens.add({
+                    targets: coin,
+                    x: jar.x + Phaser.Math.Between(-20, 20),
+                    y: jar.y + Phaser.Math.Between(-15, 15),
+                    duration: 300, ease: 'Quad.easeOut'
+                });
+            }
+        }
+    }
+
+    createShopTouchControls() {
+        var h = this.scale.height, w = this.scale.width, self = this;
+        var dSize = 44, dPad = 10, baseX = 60, baseY = h - 90;
+        var dirs = [
+            { key: 'up', x: baseX, y: baseY - dSize - dPad, label: '\u25B2' },
+            { key: 'down', x: baseX, y: baseY + dSize + dPad, label: '\u25BC' },
+            { key: 'left', x: baseX - dSize - dPad, y: baseY, label: '\u25C0' },
+            { key: 'right', x: baseX + dSize + dPad, y: baseY, label: '\u25B6' }
+        ];
+        for (var i = 0; i < dirs.length; i++) {
+            var d = dirs[i];
+            var btn = this.add.circle(d.x, d.y, dSize / 2, 0xffffff, 0.15).setDepth(100).setScrollFactor(0).setInteractive();
+            this.add.text(d.x, d.y, d.label, { fontSize: '18px', color: '#ffffff' }).setOrigin(0.5).setDepth(101).setScrollFactor(0).setAlpha(0.5);
+            (function(key) {
+                btn.on('pointerdown', function() { self.touchDir[key] = true; });
+                btn.on('pointerup', function() { self.touchDir[key] = false; });
+                btn.on('pointerout', function() { self.touchDir[key] = false; });
+            })(d.key);
+        }
+        // Action button
+        var actBtn = this.add.circle(w - 60, h - 90, 28, 0xe94560, 0.4).setDepth(100).setScrollFactor(0).setInteractive();
+        this.add.text(w - 60, h - 90, '\u2694', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
+        actBtn.on('pointerdown', function() { self.doAction(); });
+    }
+
+    update() {
+        if (!this.player || !this.player.body) return;
+        var speed = 160;
+        var vx = 0, vy = 0;
+        var cur = this.cursors, ws = this.wasd, td = this.touchDir;
+
+        if (cur.left.isDown || ws.A.isDown || td.left) vx = -speed;
+        else if (cur.right.isDown || ws.D.isDown || td.right) vx = speed;
+        if (cur.up.isDown || ws.W.isDown || td.up) vy = -speed;
+        else if (cur.down.isDown || ws.S.isDown || td.down) vy = speed;
+
+        this.player.setVelocity(vx, vy);
+
+        // Animation
+        if (vx < 0) { this.player.play('hiro-walk-left', true); this.facing = 'left'; }
+        else if (vx > 0) { this.player.play('hiro-walk-right', true); this.facing = 'right'; }
+        else if (vy < 0) { this.player.play('hiro-walk-up', true); this.facing = 'up'; }
+        else if (vy > 0) { this.player.play('hiro-walk-down', true); this.facing = 'down'; }
+        else { this.player.play('hiro-idle-' + this.facing, true); }
+
+        // Shadow follows
+        this.shadow.setPosition(this.player.x, this.player.y + 20);
+
+        // Proximity hint near counter
+        if (this.player.y < this.counterFrontY + 35 && !this.counterHintShown) {
+            this.counterHintShown = true;
+            var hint = this.add.text(this.scale.width / 2, this.counterFrontY + 6, 'SPACE to browse wares', {
+                fontFamily: 'Nunito', fontSize: '13px', fontStyle: '700', color: '#f5c842',
+                stroke: '#000000', strokeThickness: 2
+            }).setOrigin(0.5).setDepth(20).setAlpha(0);
+            this.tweens.add({ targets: hint, alpha: 1, duration: 300 });
+            this.tweens.add({ targets: hint, alpha: 0, duration: 500, delay: 2500, onComplete: function() { hint.destroy(); } });
+        }
+        if (this.player.y > this.counterFrontY + 50) this.counterHintShown = false;
     }
 
     createShelfItem(item, pos) {
-        var self = this;
-        // Item icon on counter (colored box + symbol)
-        var iconBg = this.add.rectangle(pos.x, pos.y, 36, 36, item.color, 0.9)
-            .setStrokeStyle(2, 0xffffff, 0.5).setDepth(5);
+        var iconBg = this.add.rectangle(pos.x, pos.y, 36, 36, item.color, 0.9).setStrokeStyle(2, 0xffffff, 0.5).setDepth(5);
         var iconText = this.add.text(pos.x, pos.y, item.symbol, {
             fontFamily: 'Nunito', fontSize: '20px', fontStyle: '900', color: '#ffffff',
             stroke: '#000000', strokeThickness: 2
         }).setOrigin(0.5).setDepth(6);
-
-        // Item name below counter
-        var counterBottom = pos.y + 50;
-        this.add.text(pos.x, counterBottom, item.name, {
+        this.add.text(pos.x, pos.y + 50, item.name, {
             fontFamily: 'Nunito', fontSize: '12px', fontStyle: '700', color: '#dddddd',
             stroke: '#000000', strokeThickness: 2
         }).setOrigin(0.5).setDepth(5);
-
-        // Gentle hover bob
-        this.tweens.add({
-            targets: [iconBg, iconText], y: '-=2', duration: 1000,
-            yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: item.shelfIdx * 150
-        });
-
-        // Selection glow
+        this.tweens.add({ targets: [iconBg, iconText], y: '-=2', duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: item.shelfIdx * 150 });
         var glowCirc = this.add.circle(pos.x, pos.y, 26, item.color, 0).setDepth(3);
         this.shelfGlows.push(glowCirc);
         this.shelfIcons.push({ bg: iconBg, text: iconText });
-
-        // Interactive hit zone
-        var hitZone = this.add.rectangle(pos.x, pos.y, 80, 90, 0x000000, 0)
-            .setInteractive({ useHandCursor: true }).setDepth(8);
-        hitZone.on('pointerup', function() { self.selectItem(item); });
     }
 
     selectItem(item) {
@@ -6808,12 +6946,7 @@ class ShopScene extends Phaser.Scene {
         for (var gi = 0; gi < this.shelfGlows.length; gi++) {
             var sel = gi === item.shelfIdx;
             this.tweens.add({ targets: this.shelfGlows[gi], alpha: sel ? 0.4 : 0, duration: 200 });
-            if (sel) {
-                this.tweens.add({
-                    targets: [this.shelfIcons[gi].bg, this.shelfIcons[gi].text],
-                    scaleX: 1.15, scaleY: 1.15, duration: 150, yoyo: true
-                });
-            }
+            if (sel) this.tweens.add({ targets: [this.shelfIcons[gi].bg, this.shelfIcons[gi].text], scaleX: 1.15, scaleY: 1.15, duration: 150, yoyo: true });
         }
         try { this.sound.play('sfx-coin', { volume: 0.3 }); } catch(e) {}
     }
@@ -6824,42 +6957,21 @@ class ShopScene extends Phaser.Scene {
             this.tweens.add({ targets: this.feedbackText, scaleX: 1.2, scaleY: 1.2, duration: 150, yoyo: true });
             return;
         }
-        if (item.key === 'shield' && gameState.hasShield) {
-            this.feedbackText.setText('Already have shield!').setColor('#ef4444'); return;
-        }
-        if (item.key === 'hint' && gameState.hasHint) {
-            this.feedbackText.setText('Already have hint!').setColor('#ef4444'); return;
-        }
-        if (item.key === 'dungeonkey' && gameState.hasDungeonKey) {
-            this.feedbackText.setText('Already have key!').setColor('#ef4444'); return;
-        }
+        if (item.key === 'shield' && gameState.hasShield) { this.feedbackText.setText('Already have shield!').setColor('#ef4444'); return; }
+        if (item.key === 'hint' && gameState.hasHint) { this.feedbackText.setText('Already have hint!').setColor('#ef4444'); return; }
+        if (item.key === 'dungeonkey' && gameState.hasDungeonKey) { this.feedbackText.setText('Already have key!').setColor('#ef4444'); return; }
 
         gameState.coins -= item.cost;
         this.coinDisplay.setText('' + gameState.coins);
-
         switch(item.key) {
-            case 'potion':
-                gameState.hearts = Math.min(gameState.hearts + 2, gameState.maxHearts);
-                this.feedbackText.setText('Hearts restored!').setColor('#22c55e');
-                break;
-            case 'shield':
-                gameState.hasShield = true;
-                this.feedbackText.setText('Shield equipped!').setColor('#66ccff');
-                break;
-            case 'hint':
-                gameState.hasHint = true;
-                this.feedbackText.setText('Hint scroll ready!').setColor('#66ccff');
-                break;
-            case 'dungeonkey':
-                gameState.hasDungeonKey = true;
-                this.feedbackText.setText('Key acquired!').setColor('#f5c842');
-                break;
+            case 'potion': gameState.hearts = Math.min(gameState.hearts + 2, gameState.maxHearts); this.feedbackText.setText('Hearts restored!').setColor('#22c55e'); break;
+            case 'shield': gameState.hasShield = true; this.feedbackText.setText('Shield equipped!').setColor('#66ccff'); break;
+            case 'hint': gameState.hasHint = true; this.feedbackText.setText('Hint scroll ready!').setColor('#66ccff'); break;
+            case 'dungeonkey': gameState.hasDungeonKey = true; this.feedbackText.setText('Key acquired!').setColor('#f5c842'); break;
         }
         try { this.sound.play('sfx-shop', { volume: 0.5 }); } catch(e) {}
         this.tweens.add({ targets: this.feedbackText, scaleX: 1.2, scaleY: 1.2, duration: 150, yoyo: true });
-        if (this.merchantSprite) {
-            this.tweens.add({ targets: this.merchantSprite, scaleX: 3.3, scaleY: 3.3, duration: 150, yoyo: true });
-        }
+        if (this.merchantSprite) this.tweens.add({ targets: this.merchantSprite, scaleX: 3.3, scaleY: 3.3, duration: 150, yoyo: true });
     }
 }
 
