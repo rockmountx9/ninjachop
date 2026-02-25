@@ -572,7 +572,7 @@ class BootScene extends Phaser.Scene {
     constructor() { super({ key: 'BootScene' }); }
 
     preload() {
-        var w = 480, h = 854;
+        var w = this.scale.width, h = this.scale.height;
         this.add.rectangle(w/2, h/2, w, h, COLORS.darkBg);
         var bar = this.add.rectangle(w/2 - 148, h/2 + 30, 0, 20, COLORS.accent).setOrigin(0, 0.5);
         this.add.text(w/2, h/2 - 60, 'MATH CHOP!', { fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5);
@@ -1007,7 +1007,7 @@ class PrologueScene extends Phaser.Scene {
     constructor() { super({ key: 'PrologueScene' }); }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.w = w; this.h = h;
         this.prologueStep = 0;
 
@@ -1723,7 +1723,7 @@ class MenuScene extends Phaser.Scene {
     constructor() { super({ key: 'MenuScene' }); }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.add.rectangle(w/2, h/2, w, h, COLORS.darkBg);
 
         this.add.text(w/2, 180, 'CHOPMATH', {
@@ -1785,7 +1785,7 @@ class MenuScene extends Phaser.Scene {
     }
 
     showCodeScreen(code) {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         var overlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.7).setDepth(100).setInteractive();
         var panel = this.add.rectangle(w/2, h/2, 380, 260, 0x16213e).setDepth(101).setStrokeStyle(3, COLORS.gold);
 
@@ -1817,7 +1817,7 @@ class MenuScene extends Phaser.Scene {
     }
 
     showCodeInput() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.codeText = '';
 
         var overlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.7).setDepth(100).setInteractive();
@@ -1906,6 +1906,7 @@ class WorldScene extends Phaser.Scene {
         var landConfig = LAND_CONFIGS[gameState.currentLand];
         this.landConfig = landConfig;
         this.npcData = landConfig.npcData;
+        this.cameras.main.setBackgroundColor(Phaser.Display.Color.IntegerToColor(landConfig.colors.groundA).rgba);
         var colors = landConfig.colors;
 
         var worldW = COLS * T, worldH = ROWS * T;
@@ -2162,11 +2163,11 @@ class WorldScene extends Phaser.Scene {
         var self = this;
 
         this.time.delayedCall(600, function() {
-            var bx = cam.scrollX + 240, by = cam.scrollY + 200;
+            var bx = cam.scrollX + self.scale.width / 2, by = cam.scrollY + 200;
 
             // Cinematic letterbox bars (brief)
-            var introTopBar = self.add.rectangle(cam.scrollX + 240, cam.scrollY, 480, 60, 0x000000).setOrigin(0.5, 0).setDepth(200).setAlpha(0);
-            var introBotBar = self.add.rectangle(cam.scrollX + 240, cam.scrollY + 854, 480, 60, 0x000000).setOrigin(0.5, 1).setDepth(200).setAlpha(0);
+            var introTopBar = self.add.rectangle(bx, cam.scrollY, self.scale.width, 60, 0x000000).setOrigin(0.5, 0).setDepth(200).setAlpha(0);
+            var introBotBar = self.add.rectangle(bx, cam.scrollY + self.scale.height, self.scale.width, 60, 0x000000).setOrigin(0.5, 1).setDepth(200).setAlpha(0);
             self.tweens.add({ targets: [introTopBar, introBotBar], alpha: 1, duration: 300 });
 
             // Dark overlay
@@ -2241,7 +2242,7 @@ class WorldScene extends Phaser.Scene {
         });
 
         // D-pad layout (bottom-left) — relative positions, repositioned each frame
-        var dpadCX = 90, dpadCY = 760, btnSize = 52, gap = 4;
+        var dpadCX = 90, dpadCY = Math.min(760, this.scale.height - 94), btnSize = 52, gap = 4;
 
         // D-pad background circle
         var dpadBg = this.add.circle(0, 0, 78, 0x000000, 0.3).setStrokeStyle(2, 0xffffff, 0.15);
@@ -2288,7 +2289,7 @@ class WorldScene extends Phaser.Scene {
         btnRight.on('pointerout', function() { self.touchDir.right = false; });
 
         // ACTION BUTTON (bottom-right) — chop/talk
-        var actionX = 390, actionY = 760;
+        var actionX = this.scale.width - 90, actionY = Math.min(760, this.scale.height - 94);
         var actionBg = this.add.circle(actionX - dpadCX, actionY - dpadCY, 40, 0xe94560, 0.6)
             .setStrokeStyle(3, 0xffffff, 0.4).setInteractive();
         this.touchContainer.add(actionBg);
@@ -2374,7 +2375,7 @@ class WorldScene extends Phaser.Scene {
     showDialog(name, msg) {
         this.dialogActive = true;
         var cam = this.cameras.main;
-        var dx = cam.scrollX + 240;
+        var dx = cam.scrollX + this.scale.width / 2;
         var dy = cam.scrollY + 540;
 
         this.dialogGroup = this.add.container(0, 0).setDepth(100);
@@ -2709,11 +2710,11 @@ class WorldScene extends Phaser.Scene {
         this.quickBattleContainer = this.add.container(0, 0).setDepth(200);
 
         // Dim overlay
-        var dim = this.add.rectangle(ox + 240, oy + 427, 480, 854, 0x000000, 0.6);
+        var dim = this.add.rectangle(ox + this.scale.width/2, oy + this.scale.height/2, this.scale.width, this.scale.height, 0x000000, 0.6);
         this.quickBattleContainer.add(dim);
 
         // Panel
-        var panelX = ox + 240, panelY = oy + 350;
+        var panelX = ox + this.scale.width/2, panelY = oy + 350;
         var panel = this.add.rectangle(panelX, panelY, 380, 420, 0x16213e, 0.95).setStrokeStyle(3, COLORS.gold);
         this.quickBattleContainer.add(panel);
 
@@ -2849,7 +2850,7 @@ class WorldScene extends Phaser.Scene {
             // Green flash on panel
             this.qbFeedback.setText('').setColor('#22c55e');
             var cam = this.cameras.main;
-            var flash = this.add.rectangle(cam.scrollX + 240, cam.scrollY + 350, 380, 420, 0x22c55e, 0.3).setDepth(201);
+            var flash = this.add.rectangle(cam.scrollX + this.scale.width/2, cam.scrollY + 350, 380, 420, 0x22c55e, 0.3).setDepth(201);
             this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: function() { flash.destroy(); } });
 
             if (source.type === 'enemy') {
@@ -2994,7 +2995,7 @@ class CombatScene extends Phaser.Scene {
     constructor() { super({ key: 'CombatScene' }); }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.W = w; this.H = h;
 
         // Load land config first (needed for background)
@@ -3091,16 +3092,14 @@ class CombatScene extends Phaser.Scene {
         // Far hills (soft overlapping ellipses)
         var hillY = skyH;
         var hillFar = bg.hillFar || 0x4a8a3c;
-        var positions = [40, 120, 200, 280, 360, 440];
-        for (var i = 0; i < positions.length; i++) {
-            var el = this.add.ellipse(positions[i], hillY + 15, 140, 70, hillFar, 0.7).setDepth(1);
+        for (var hi = 0; hi <= w; hi += Math.round(w / 5)) {
+            this.add.ellipse(hi, hillY + 15, 140, 70, hillFar, 0.7).setDepth(1);
         }
 
         // Near hills
         var hillNear = bg.hillNear || 0x6aaa4c;
-        var pos2 = [0, 100, 220, 340, 480];
-        for (var i = 0; i < pos2.length; i++) {
-            this.add.ellipse(pos2[i], hillY + 45, 160, 80, hillNear, 0.85).setDepth(1);
+        for (var hi2 = 0; hi2 <= w; hi2 += Math.round(w / 4)) {
+            this.add.ellipse(hi2, hillY + 45, 160, 80, hillNear, 0.85).setDepth(1);
         }
 
         // Ground fill
@@ -6225,7 +6224,7 @@ class VictoryScene extends Phaser.Scene {
     constructor() { super({ key: 'VictoryScene' }); }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.add.rectangle(w/2, h/2, w, h, 0x0a0a1e);
 
         try { this.sound.play('sfx-levelup', { volume: 0.8 }); } catch(e) {}
@@ -6421,7 +6420,7 @@ class ShopScene extends Phaser.Scene {
     }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         var gfx = this.add.graphics();
 
         // === BACK WALL (wood planks) ===
@@ -6678,7 +6677,7 @@ class ShopScene extends Phaser.Scene {
 
     selectItem(item) {
         this.selectedItem = item;
-        var w = 480, h = 854;
+        var w = this.scale.width, h = this.scale.height;
 
         // Update panel text
         this.selName.setText(item.name);
@@ -6778,7 +6777,7 @@ class DeathScene extends Phaser.Scene {
     }
 
     create() {
-        var w = 480, h = 854, self = this;
+        var w = this.scale.width, h = this.scale.height, self = this;
         this.add.rectangle(w/2, h/2, w, h, 0x0a0a0a);
 
         try { this.sound.play('sfx-gameover', { volume: 0.6 }); } catch(e) {}
@@ -6864,7 +6863,7 @@ class UIScene extends Phaser.Scene {
     constructor() { super({ key: 'UIScene' }); }
 
     create() {
-        var w = 480;
+        var w = this.scale.width;
         this.add.rectangle(w/2, 0, w, 50, 0x000000, 0.55).setOrigin(0.5, 0).setDepth(50);
 
         // Hearts
@@ -6924,10 +6923,17 @@ class UIScene extends Phaser.Scene {
 // ============================================================
 // CONFIG & LAUNCH
 // ============================================================
+// Dynamic game dimensions — match viewport aspect ratio for fullscreen on any device
+var _vw = window.innerWidth || 480;
+var _vh = window.innerHeight || 854;
+var _aspect = _vw / _vh;
+var GAME_H = 960;
+var GAME_W = Math.max(540, Math.round(GAME_H * _aspect));
+
 var config = {
     type: Phaser.AUTO,
-    width: 480,
-    height: 854,
+    width: GAME_W,
+    height: GAME_H,
     backgroundColor: '#1a1a2e',
     parent: 'game-container',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, expandParent: true },
