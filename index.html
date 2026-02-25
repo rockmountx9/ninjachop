@@ -7,13 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a1e; }
         #game-container {
             width: 100vw; height: 100vh;
             display: flex; align-items: center; justify-content: center;
-            background: #000;
+            background: radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1e 60%, #050510 100%);
         }
-        canvas { display: block; max-width: 100vw; max-height: 100vh; }
+        #game-container::before {
+            content: 'CHOPMATH';
+            position: absolute;
+            font-family: 'Nunito', sans-serif;
+            font-size: 6vw;
+            font-weight: 900;
+            color: rgba(245, 200, 66, 0.04);
+            letter-spacing: 1.5vw;
+            pointer-events: none;
+            z-index: 0;
+        }
+        canvas { display: block; max-width: 100vw; max-height: 100vh; position: relative; z-index: 1; }
     </style>
 </head>
 <body>
@@ -2151,9 +2162,12 @@ class WorldScene extends Phaser.Scene {
         try { this.bgm = this.sound.add(landConfig.musicKey, { loop: true, volume: 0.35 }); this.bgm.play(); } catch(e) {}
         this.cameras.main.fadeIn(500);
 
-        // === MOBILE TOUCH CONTROLS (D-pad + Action button) ===
+        // === MOBILE TOUCH CONTROLS (D-pad + Action button) — only on touch devices ===
         this.touchDir = { left: false, right: false, up: false, down: false };
-        this.createTouchControls();
+        this.isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        if (this.isMobile) {
+            this.createTouchControls();
+        }
 
         // === LAND INTRO BANNER === (skip when returning from shop)
         if (!this.sceneData.fromShop) {
@@ -6896,12 +6910,19 @@ class UIScene extends Phaser.Scene {
         this.sound.mute = gameMuted;
 
         // Controls hint (only show in WorldScene)
+        var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
         var worldScene = this.scene.get('WorldScene');
         if (worldScene && worldScene.scene.isActive()) {
-            var hint = this.add.text(w/2, 820, 'WASD = Move  |  SPACE = Chop/Talk', {
+            var hintStr = isTouch ? 'Tap D-pad to move  |  Tap \u2694 to chop' : 'WASD = Move  |  SPACE = Chop/Talk';
+            var hint = this.add.text(w/2, h - 140, hintStr, {
                 fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#fff', stroke: '#000', strokeThickness: 3
             }).setOrigin(0.5).setDepth(51);
-            this.tweens.add({ targets: hint, alpha: 0, duration: 1500, delay: 4000 });
+            if (isTouch) {
+                this.tweens.add({ targets: hint, alpha: 0, duration: 1500, delay: 4000 });
+            } else {
+                // On desktop, keep visible longer then fade
+                this.tweens.add({ targets: hint, alpha: 0.4, duration: 2000, delay: 6000 });
+            }
         }
 
         // Update events
@@ -6923,17 +6944,10 @@ class UIScene extends Phaser.Scene {
 // ============================================================
 // CONFIG & LAUNCH
 // ============================================================
-// Dynamic game dimensions — match viewport aspect ratio for fullscreen on any device
-var _vw = window.innerWidth || 480;
-var _vh = window.innerHeight || 854;
-var _aspect = _vw / _vh;
-var GAME_H = 960;
-var GAME_W = Math.max(540, Math.round(GAME_H * _aspect));
-
 var config = {
     type: Phaser.AUTO,
-    width: GAME_W,
-    height: GAME_H,
+    width: 540,
+    height: 960,
     backgroundColor: '#1a1a2e',
     parent: 'game-container',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, expandParent: true },
