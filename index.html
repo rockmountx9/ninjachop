@@ -6612,9 +6612,9 @@ class ShopScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(5);
         var bubGfx = this.add.graphics().setDepth(6);
         bubGfx.fillStyle(0xffffff, 0.9);
-        bubGfx.fillRoundedRect(merchX - 60, merchY - 54, 80, 22, 6);
+        bubGfx.fillRoundedRect(merchX - 90, merchY - 54, 130, 22, 6);
         bubGfx.fillTriangle(merchX - 10, merchY - 32, merchX, merchY - 32, merchX - 5, merchY - 24);
-        this.add.text(merchX - 20, merchY - 43, 'Welcome!', {
+        this.add.text(merchX - 25, merchY - 43, 'Click an item to buy!', {
             fontFamily: 'Nunito', fontSize: '11px', fontStyle: '800', color: '#333333'
         }).setOrigin(0.5).setDepth(7);
 
@@ -6804,19 +6804,6 @@ class ShopScene extends Phaser.Scene {
     doAction() {
         var px = this.player.x, py = this.player.y;
 
-        // Check if near counter — open item selection
-        if (py < this.counterFrontY + 30) {
-            var closest = null, closestDist = 999;
-            for (var i = 0; i < this.itemPositions.length; i++) {
-                var dx = Math.abs(px - this.itemPositions[i].x);
-                if (dx < closestDist) { closestDist = dx; closest = i; }
-            }
-            if (closest !== null && closestDist < 80) {
-                this.selectItem(this.shopItems[closest]);
-                return;
-            }
-        }
-
         // Check if near a jar — break it
         for (var j = 0; j < this.jars.length; j++) {
             var jar = this.jars[j];
@@ -6924,21 +6911,13 @@ class ShopScene extends Phaser.Scene {
         // Shadow follows
         this.shadow.setPosition(this.player.x, this.player.y + 20);
 
-        // Proximity hint near counter
-        if (this.player.y < this.counterFrontY + 35 && !this.counterHintShown) {
-            this.counterHintShown = true;
-            var hint = this.add.text(this.scale.width / 2, this.counterFrontY + 6, 'SPACE to browse wares', {
-                fontFamily: 'Nunito', fontSize: '13px', fontStyle: '700', color: '#f5c842',
-                stroke: '#000000', strokeThickness: 2
-            }).setOrigin(0.5).setDepth(20).setAlpha(0);
-            this.tweens.add({ targets: hint, alpha: 1, duration: 300 });
-            this.tweens.add({ targets: hint, alpha: 0, duration: 500, delay: 2500, onComplete: function() { hint.destroy(); } });
-        }
+        // Proximity hint near jars
         if (this.player.y > this.counterFrontY + 50) this.counterHintShown = false;
     }
 
     createShelfItem(item, pos) {
-        var iconBg = this.add.rectangle(pos.x, pos.y, 36, 36, item.color, 0.9).setStrokeStyle(2, 0xffffff, 0.5).setDepth(5);
+        var self = this;
+        var iconBg = this.add.rectangle(pos.x, pos.y, 36, 36, item.color, 0.9).setStrokeStyle(2, 0xffffff, 0.5).setDepth(5).setInteractive({ useHandCursor: true });
         var iconText = this.add.text(pos.x, pos.y, item.symbol, {
             fontFamily: 'Nunito', fontSize: '20px', fontStyle: '900', color: '#ffffff',
             stroke: '#000000', strokeThickness: 2
@@ -6948,6 +6927,7 @@ class ShopScene extends Phaser.Scene {
             stroke: '#000000', strokeThickness: 2
         }).setOrigin(0.5).setDepth(5);
         this.tweens.add({ targets: [iconBg, iconText], y: '-=2', duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: item.shelfIdx * 150 });
+        iconBg.on('pointerdown', function() { self.selectItem(item); });
         var glowCirc = this.add.circle(pos.x, pos.y, 26, item.color, 0).setDepth(3);
         this.shelfGlows.push(glowCirc);
         this.shelfIcons.push({ bg: iconBg, text: iconText });
