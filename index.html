@@ -370,24 +370,22 @@ class BootScene extends Phaser.Scene {
         // Chicken sprites
         this.load.spritesheet('chicken-white', ASSET_BASE + 'Actor/Animals/Chicken/SpriteSheetWhite.png', { frameWidth: 16, frameHeight: 16 });
 
-        // Audio — only load OGG if browser supports it (Safari/iOS doesn't)
-        var canOgg = (new Audio()).canPlayType('audio/ogg; codecs="vorbis"') !== '';
-        if (canOgg) {
-            this.load.audio('music-menu', ASSET_BASE + 'Audio/Musics/1 - Adventure Begin.ogg');
-            this.load.audio('music-story', ASSET_BASE + 'Audio/Musics/6 - Story.ogg');
-            this.load.audio('music-meadow', ASSET_BASE + 'Audio/Musics/33 - Calm Village.ogg');
-            this.load.audio('music-river', ASSET_BASE + 'Audio/Musics/18 - Aquatic.ogg');
-            this.load.audio('music-combat', ASSET_BASE + 'Audio/Musics/17 - Fight.ogg');
-        }
-        this.load.audio('sfx-party', ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav');
-        this.load.audio('sfx-coin', ASSET_BASE + 'Audio/Sounds/Bonus/Coin.wav');
-        this.load.audio('sfx-slash', ASSET_BASE + 'Audio/Sounds/Whoosh & Slash/Slash.wav');
-        this.load.audio('sfx-correct', ASSET_BASE + 'Audio/Sounds/Bonus/Bonus2.wav');
-        this.load.audio('sfx-levelup', ASSET_BASE + 'Audio/Jingles/LevelUp1.wav');
-        this.load.audio('sfx-gameover', ASSET_BASE + 'Audio/Jingles/GameOver.wav');
-        this.load.audio('sfx-combo3', ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav');
-        this.load.audio('sfx-shadow', ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp2.wav');
-        this.load.audio('sfx-shop', ASSET_BASE + 'Audio/Sounds/Bonus/Gold2.wav');
+        // Audio — OGG + MP3 fallback (Safari/iOS needs MP3)
+        var MP3 = ASSET_BASE + 'Audio/mp3/';
+        this.load.audio('music-menu', [ASSET_BASE + 'Audio/Musics/1 - Adventure Begin.ogg', MP3 + 'music-menu.mp3']);
+        this.load.audio('music-story', [ASSET_BASE + 'Audio/Musics/6 - Story.ogg', MP3 + 'music-story.mp3']);
+        this.load.audio('music-meadow', [ASSET_BASE + 'Audio/Musics/33 - Calm Village.ogg', MP3 + 'music-meadow.mp3']);
+        this.load.audio('music-river', [ASSET_BASE + 'Audio/Musics/18 - Aquatic.ogg', MP3 + 'music-river.mp3']);
+        this.load.audio('music-combat', [ASSET_BASE + 'Audio/Musics/17 - Fight.ogg', MP3 + 'music-combat.mp3']);
+        this.load.audio('sfx-party', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav', MP3 + 'sfx-party.mp3']);
+        this.load.audio('sfx-coin', [ASSET_BASE + 'Audio/Sounds/Bonus/Coin.wav', MP3 + 'sfx-coin.mp3']);
+        this.load.audio('sfx-slash', [ASSET_BASE + 'Audio/Sounds/Whoosh & Slash/Slash.wav', MP3 + 'sfx-slash.mp3']);
+        this.load.audio('sfx-correct', [ASSET_BASE + 'Audio/Sounds/Bonus/Bonus2.wav', MP3 + 'sfx-correct.mp3']);
+        this.load.audio('sfx-levelup', [ASSET_BASE + 'Audio/Jingles/LevelUp1.wav', MP3 + 'sfx-levelup.mp3']);
+        this.load.audio('sfx-gameover', [ASSET_BASE + 'Audio/Jingles/GameOver.wav', MP3 + 'sfx-gameover.mp3']);
+        this.load.audio('sfx-combo3', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav', MP3 + 'sfx-party.mp3']);
+        this.load.audio('sfx-shadow', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp2.wav', MP3 + 'sfx-shadow.mp3']);
+        this.load.audio('sfx-shop', [ASSET_BASE + 'Audio/Sounds/Bonus/Gold2.wav', MP3 + 'sfx-shop.mp3']);
     }
 
     create() {
