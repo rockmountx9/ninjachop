@@ -24,7 +24,7 @@ var COLORS = {
 var failedAssets = new Set();
 var gameMuted = false;
 var gameState = {
-    ninjaCode: null, coins: 100, hearts: 5, maxHearts: 5,
+    ninjaCode: null, coins: 0, hearts: 5, maxHearts: 5,
     streak: 0, bestCombo: 0, currentLand: 1, landsCompleted: 0,
     totalProblems: 0, totalCorrect: 0, inventory: [], grassCut: 0,
     land1Complete: false, hasShield: false, hasHint: false, hasDungeonKey: false
@@ -74,6 +74,75 @@ var LAND2_HARD = [ // minuends 15-18, large subtrahends
     {a:17,b:8,op:'-'}, {a:17,b:9,op:'-'}, {a:18,b:9,op:'-'},
     {a:15,b:7,op:'-'}, {a:17,b:7,op:'-'}, {a:18,b:8,op:'-'},
     {a:14,b:8,op:'-'}
+];
+
+// Tiered problem pools for Land 3 (Multiplication 2×–5×)
+var LAND3_EASY = [ // 2× and 3× tables
+    {a:2,b:3,op:'×'}, {a:2,b:4,op:'×'}, {a:2,b:5,op:'×'},
+    {a:2,b:6,op:'×'}, {a:2,b:7,op:'×'}, {a:2,b:8,op:'×'},
+    {a:2,b:9,op:'×'}, {a:3,b:3,op:'×'}, {a:3,b:4,op:'×'},
+    {a:3,b:5,op:'×'}, {a:3,b:6,op:'×'}, {a:3,b:7,op:'×'},
+    {a:3,b:8,op:'×'}, {a:3,b:9,op:'×'}, {a:2,b:2,op:'×'}
+];
+var LAND3_MEDIUM = [ // 4× table + harder 3×
+    {a:4,b:3,op:'×'}, {a:4,b:4,op:'×'}, {a:4,b:5,op:'×'},
+    {a:4,b:6,op:'×'}, {a:4,b:7,op:'×'}, {a:4,b:8,op:'×'},
+    {a:4,b:9,op:'×'}, {a:3,b:7,op:'×'}, {a:3,b:8,op:'×'},
+    {a:3,b:9,op:'×'}, {a:4,b:2,op:'×'}, {a:3,b:6,op:'×'},
+    {a:4,b:4,op:'×'}, {a:2,b:9,op:'×'}, {a:3,b:3,op:'×'}
+];
+var LAND3_HARD = [ // 5× table + hardest combos
+    {a:5,b:3,op:'×'}, {a:5,b:4,op:'×'}, {a:5,b:5,op:'×'},
+    {a:5,b:6,op:'×'}, {a:5,b:7,op:'×'}, {a:5,b:8,op:'×'},
+    {a:5,b:9,op:'×'}, {a:4,b:7,op:'×'}, {a:4,b:8,op:'×'},
+    {a:4,b:9,op:'×'}, {a:3,b:9,op:'×'}, {a:5,b:2,op:'×'},
+    {a:4,b:6,op:'×'}
+];
+
+// Tiered problem pools for Land 4 (Multiplication 6×–9× + Division)
+var LAND4_EASY = [ // 6× table + easy division
+    {a:6,b:2,op:'×'}, {a:6,b:3,op:'×'}, {a:6,b:4,op:'×'},
+    {a:6,b:5,op:'×'}, {a:6,b:6,op:'×'}, {a:6,b:7,op:'×'},
+    {a:6,b:8,op:'×'}, {a:6,b:9,op:'×'}, {a:12,b:2,op:'÷'},
+    {a:18,b:3,op:'÷'}, {a:24,b:4,op:'÷'}, {a:30,b:5,op:'÷'},
+    {a:36,b:6,op:'÷'}, {a:7,b:2,op:'×'}, {a:7,b:3,op:'×'}
+];
+var LAND4_MEDIUM = [ // 7×-8× + medium division
+    {a:7,b:4,op:'×'}, {a:7,b:5,op:'×'}, {a:7,b:6,op:'×'},
+    {a:7,b:7,op:'×'}, {a:7,b:8,op:'×'}, {a:7,b:9,op:'×'},
+    {a:8,b:3,op:'×'}, {a:8,b:4,op:'×'}, {a:8,b:5,op:'×'},
+    {a:8,b:6,op:'×'}, {a:42,b:6,op:'÷'}, {a:49,b:7,op:'÷'},
+    {a:56,b:7,op:'÷'}, {a:48,b:8,op:'÷'}, {a:56,b:8,op:'÷'}
+];
+var LAND4_HARD = [ // 8×-9× hardest + hard division
+    {a:8,b:7,op:'×'}, {a:8,b:8,op:'×'}, {a:8,b:9,op:'×'},
+    {a:9,b:6,op:'×'}, {a:9,b:7,op:'×'}, {a:9,b:8,op:'×'},
+    {a:9,b:9,op:'×'}, {a:63,b:7,op:'÷'}, {a:72,b:8,op:'÷'},
+    {a:81,b:9,op:'÷'}, {a:64,b:8,op:'÷'}, {a:54,b:9,op:'÷'},
+    {a:63,b:9,op:'÷'}
+];
+
+// Tiered problem pools for Land 5 (Mixed — all operations, weighted toward hardest)
+var LAND5_EASY = [ // review addition + subtraction
+    {a:8,b:7,op:'+'}, {a:9,b:6,op:'+'}, {a:7,b:8,op:'+'},
+    {a:15,b:8,op:'-'}, {a:16,b:9,op:'-'}, {a:17,b:8,op:'-'},
+    {a:4,b:7,op:'×'}, {a:5,b:6,op:'×'}, {a:3,b:8,op:'×'},
+    {a:6,b:7,op:'×'}, {a:36,b:6,op:'÷'}, {a:42,b:7,op:'÷'},
+    {a:9,b:8,op:'+'}, {a:14,b:7,op:'-'}, {a:5,b:9,op:'×'}
+];
+var LAND5_MEDIUM = [ // harder multiply + division
+    {a:7,b:8,op:'×'}, {a:8,b:6,op:'×'}, {a:9,b:7,op:'×'},
+    {a:7,b:9,op:'×'}, {a:56,b:7,op:'÷'}, {a:63,b:9,op:'÷'},
+    {a:48,b:6,op:'÷'}, {a:72,b:8,op:'÷'}, {a:8,b:8,op:'×'},
+    {a:17,b:9,op:'-'}, {a:18,b:9,op:'-'}, {a:9,b:9,op:'+'},
+    {a:8,b:9,op:'×'}, {a:81,b:9,op:'÷'}, {a:64,b:8,op:'÷'}
+];
+var LAND5_HARD = [ // the absolute hardest facts
+    {a:7,b:8,op:'×'}, {a:8,b:9,op:'×'}, {a:9,b:9,op:'×'},
+    {a:6,b:9,op:'×'}, {a:7,b:7,op:'×'}, {a:56,b:7,op:'÷'},
+    {a:63,b:9,op:'÷'}, {a:72,b:8,op:'÷'}, {a:81,b:9,op:'÷'},
+    {a:54,b:6,op:'÷'}, {a:8,b:7,op:'×'}, {a:9,b:8,op:'×'},
+    {a:49,b:7,op:'÷'}
 ];
 
 // ============================================================
@@ -200,6 +269,186 @@ var LAND_CONFIGS = {
             { name: 'Axolotl', hp: 3, maxHp: 3, sprite: 'axolot', anim: 'axolot-idle', scale: 5, coins: 8 }
         ],
         bossData: { name: 'River Serpent', hp: 8, maxHp: 8, sprite: 'boss-serpent', anim: 'boss-serpent-idle', scale: 8, isBoss: true, coins: 25 }
+    },
+    3: {
+        name: 'Bamboo Forest', musicKey: 'music-bamboo', dungeonToll: 60,
+        colors: { groundA: 0x3a7a3a, groundB: 0x2a6a2a, path: 0x8a7a4a, pathInner: 0x7a6a3a,
+                  water: 0x1a5a2a, waterShine: 0x3a8a4a, treeTrunk: 0x6a8a2a, treeLeaf: 0x1a5a1a,
+                  treeHighlight: 0x2a7a2a, grass: 0x1a6a1a, grassBlade1: 0x2a8a2a,
+                  grassBlade2: 0x1a7a1a, houseBrown: 0x7a6a2a, roofRed: 0x4a6a1a },
+        problemPools: { easy: LAND3_EASY, medium: LAND3_MEDIUM, hard: LAND3_HARD },
+        grassDensity: 0.30,
+        combatBg: {
+            skyTop: 0x2a5a2a, skyBot: 0x1a4a1a,
+            hillFar: 0x1a5a1a, hillNear: 0x2a6a2a,
+            ground: 0x3a5a2a, groundDark: 0x2a4a1a,
+            platform: 0x6a7a3a, platformEdge: 0x5a6a2a,
+            numPanel: 0x2a3a1a, numBtn: 0x3a4a2a, numBtnStroke: 0x5a6a3a,
+            numGo: 0x2a7a2a, numDel: 0x7a2a2a, numAnswerBg: 0x1a2a1a
+        },
+        spawnPos: { r: 16, c: 10 },
+        mapLayout: [
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+            [2,0,0,0,2,0,0,0,0,0,7,0,0,0,0,2,0,0,0,2],
+            [2,0,2,0,0,0,2,0,0,0,4,0,0,2,0,0,0,2,0,2],
+            [2,0,0,0,0,2,0,0,5,0,4,0,5,0,2,0,0,0,0,2],
+            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,2],
+            [2,0,0,0,2,0,0,2,0,0,4,0,2,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,2,0,0,0,0,0,0,6,0,4,0,6,0,0,0,0,0,2,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
+            [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,2],
+            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,3,3,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,3,3,3,3,0,2],
+            [2,0,0,0,2,0,0,5,0,0,4,0,0,0,0,3,3,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+        ],
+        npcData: [
+            { r: 7, c: 8, name: 'Forest Sage', sprite: 'npc-elder', msg: 'The bamboo grows in patterns of multiplication. Master the times tables, and the Bamboo Oni will fall. The Fragment of Products awaits below.' },
+            { r: 7, c: 12, name: 'Merchant', sprite: 'npc-merchant', msg: '__SHOP__' },
+            { r: 3, c: 8, name: 'Bamboo Scout', sprite: 'npc-young', msg: 'The forest whispers in multiples! Two threes, four fives... every branch is a math pattern. Watch out for the pandas \u2014 they look cute but fight hard!' }
+        ],
+        enemySpawns: [
+            { r: 4, c: 5, sprite: 'bamboo', anim: 'bamboo-idle', name: 'Bamboo Sprite', coins: 4, patrolAxis: 'y', patrolRange: 2 },
+            { r: 12, c: 7, sprite: 'panda', anim: 'panda-idle', name: 'Shadow Panda', coins: 5, patrolAxis: 'x', patrolRange: 3 },
+            { r: 8, c: 14, sprite: 'owl', anim: 'owl-idle', name: 'Forest Owl', coins: 4, patrolAxis: 'y', patrolRange: 2 }
+        ],
+        chickenSpawns: [
+            { r: 6, c: 3 }, { r: 13, c: 14 }, { r: 17, c: 3 }
+        ],
+        encounters: [
+            { name: 'Bamboo Sprite', hp: 3, maxHp: 3, sprite: 'bamboo', anim: 'bamboo-idle', scale: 5, coins: 7 },
+            { name: 'Shadow Panda', hp: 4, maxHp: 4, sprite: 'panda', anim: 'panda-idle', scale: 5, coins: 9 },
+            { name: 'Yellow Bamboo', hp: 3, maxHp: 3, sprite: 'bambooyellow', anim: 'bambooyellow-idle', scale: 5, coins: 8 },
+            { name: 'Forest Owl', hp: 3, maxHp: 3, sprite: 'owl', anim: 'owl-idle', scale: 5, coins: 7 }
+        ],
+        bossData: { name: 'Bamboo Oni', hp: 10, maxHp: 10, sprite: 'boss-bamboo', anim: 'boss-bamboo-idle', scale: 2.5, isBoss: true, coins: 30 }
+    },
+    4: {
+        name: 'Shadow Citadel', musicKey: 'music-citadel', dungeonToll: 100,
+        colors: { groundA: 0x3a3a4a, groundB: 0x2a2a3a, path: 0x5a5a6a, pathInner: 0x4a4a5a,
+                  water: 0x1a1a3a, waterShine: 0x3a3a6a, treeTrunk: 0x3a3a3a, treeLeaf: 0x2a2a4a,
+                  treeHighlight: 0x4a4a6a, grass: 0x2a2a3a, grassBlade1: 0x3a3a5a,
+                  grassBlade2: 0x2a2a4a, houseBrown: 0x4a4a4a, roofRed: 0x5a2a5a },
+        problemPools: { easy: LAND4_EASY, medium: LAND4_MEDIUM, hard: LAND4_HARD },
+        grassDensity: 0.20,
+        combatBg: {
+            skyTop: 0x1a1a2e, skyBot: 0x0a0a1e,
+            hillFar: 0x2a2a3a, hillNear: 0x3a3a4a,
+            ground: 0x2a2a3a, groundDark: 0x1a1a2a,
+            platform: 0x4a4a5a, platformEdge: 0x3a3a4a,
+            numPanel: 0x1a1a2a, numBtn: 0x2a2a3a, numBtnStroke: 0x4a4a5a,
+            numGo: 0x2a5a2a, numDel: 0x5a1a1a, numAnswerBg: 0x1a1a1a
+        },
+        spawnPos: { r: 16, c: 10 },
+        mapLayout: [
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+            [2,0,0,0,0,2,2,0,0,0,7,0,0,0,2,2,0,0,0,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
+            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
+            [2,0,0,0,2,0,0,0,6,0,4,0,6,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,2],
+            [2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
+            [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,0,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,3,3,3,3,3,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,0,2],
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+        ],
+        npcData: [
+            { r: 6, c: 8, name: 'Shadow Elder', sprite: 'npc-elder', msg: 'Kage built this citadel to hide the Fragment of Quotients. Division is his weapon \u2014 turn it against him. 56 divided by 7... think in reverse multiplication.' },
+            { r: 6, c: 12, name: 'Merchant', sprite: 'npc-merchant', msg: '__SHOP__' },
+            { r: 3, c: 5, name: 'Imprisoned Ninja', sprite: 'npc-young', msg: 'Kage locked me here because I solved his riddles! Division is just multiplication backwards \u2014 if 7\u00d78 is 56, then 56\u00f77 is 8. You can do this!' }
+        ],
+        enemySpawns: [
+            { r: 4, c: 7, sprite: 'skull', anim: 'skull-idle', name: 'Shadow Skull', coins: 5, patrolAxis: 'x', patrolRange: 2 },
+            { r: 12, c: 5, sprite: 'spirit', anim: 'spirit-idle', name: 'Dark Spirit', coins: 6, patrolAxis: 'y', patrolRange: 3 },
+            { r: 8, c: 14, sprite: 'cyclope', anim: 'cyclope-idle', name: 'Cyclops', coins: 5, patrolAxis: 'x', patrolRange: 2 }
+        ],
+        chickenSpawns: [
+            { r: 7, c: 3 }, { r: 14, c: 15 }
+        ],
+        encounters: [
+            { name: 'Shadow Skull', hp: 4, maxHp: 4, sprite: 'skull', anim: 'skull-idle', scale: 5, coins: 9 },
+            { name: 'Blue Skull', hp: 4, maxHp: 4, sprite: 'skullblue', anim: 'skullblue-idle', scale: 5, coins: 10 },
+            { name: 'Dark Spirit', hp: 5, maxHp: 5, sprite: 'spirit', anim: 'spirit-idle', scale: 5, coins: 11 },
+            { name: 'Cyclops', hp: 4, maxHp: 4, sprite: 'cyclope', anim: 'cyclope-idle', scale: 5, coins: 9 }
+        ],
+        bossData: { name: 'Shadow Knight', hp: 12, maxHp: 12, sprite: 'boss-knight', anim: 'boss-knight-idle', scale: 3, isBoss: true, coins: 40 }
+    },
+    5: {
+        name: "Kage's Fortress", musicKey: 'music-fortress', dungeonToll: 150,
+        colors: { groundA: 0x3a1a1a, groundB: 0x2a0a0a, path: 0x5a3a3a, pathInner: 0x4a2a2a,
+                  water: 0x8a3a0a, waterShine: 0xaa5a1a, treeTrunk: 0x2a1a1a, treeLeaf: 0x3a1a1a,
+                  treeHighlight: 0x5a2a2a, grass: 0x3a1a0a, grassBlade1: 0x5a2a1a,
+                  grassBlade2: 0x4a1a0a, houseBrown: 0x3a2a2a, roofRed: 0x6a1a1a },
+        problemPools: { easy: LAND5_EASY, medium: LAND5_MEDIUM, hard: LAND5_HARD },
+        grassDensity: 0.15,
+        combatBg: {
+            skyTop: 0x1a0a0a, skyBot: 0x0a0000,
+            hillFar: 0x2a1a1a, hillNear: 0x3a1a1a,
+            ground: 0x2a0a0a, groundDark: 0x1a0000,
+            platform: 0x4a2a2a, platformEdge: 0x3a1a1a,
+            numPanel: 0x2a0a0a, numBtn: 0x3a1a1a, numBtnStroke: 0x5a2a2a,
+            numGo: 0x2a5a2a, numDel: 0x6a1a1a, numAnswerBg: 0x1a0a0a
+        },
+        spawnPos: { r: 16, c: 10 },
+        mapLayout: [
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+            [2,0,0,2,0,0,0,0,0,0,7,0,0,0,0,0,0,2,0,2],
+            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,2,0,0,0,0,0,5,0,0,4,0,0,5,0,0,0,0,2,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,2,0,0,0,0,0,0,6,0,4,0,6,0,0,0,0,0,2,2],
+            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,2],
+            [2,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
+            [2,2,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,2,2],
+            [2,0,0,0,0,2,0,0,0,0,4,0,3,3,3,3,3,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,0,2],
+            [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+        ],
+        npcData: [
+            { r: 6, c: 8, name: 'Ancient Master', sprite: 'npc-elder', msg: 'This is it, Hiro. Kage himself guards the final fragment. Every math skill you\'ve learned will be tested. Addition, subtraction, multiplication, division \u2014 all at once.' },
+            { r: 6, c: 12, name: 'Merchant', sprite: 'npc-merchant', msg: '__SHOP__' },
+            { r: 3, c: 7, name: "Kage's Prisoner", sprite: 'npc-young', msg: 'Kage fears you. I heard him ranting about "the ninja who keeps solving everything." You\'re so close to restoring the Sacred Scroll. Don\'t give up!' }
+        ],
+        enemySpawns: [
+            { r: 4, c: 6, sprite: 'spirit2', anim: 'spirit2-idle', name: 'Shadow Clone', coins: 6, patrolAxis: 'y', patrolRange: 2 },
+            { r: 12, c: 7, sprite: 'eye', anim: 'eye-idle', name: 'Eye Beast', coins: 7, patrolAxis: 'x', patrolRange: 3 },
+            { r: 7, c: 14, sprite: 'dragon', anim: 'dragon-idle', name: 'Dark Dragon', coins: 7, patrolAxis: 'y', patrolRange: 2 }
+        ],
+        chickenSpawns: [
+            { r: 5, c: 3 }, { r: 14, c: 15 }
+        ],
+        encounters: [
+            { name: 'Shadow Clone', hp: 5, maxHp: 5, sprite: 'spirit2', anim: 'spirit2-idle', scale: 5, coins: 11 },
+            { name: 'Eye Beast', hp: 5, maxHp: 5, sprite: 'eye', anim: 'eye-idle', scale: 5, coins: 12 },
+            { name: 'Dark Dragon', hp: 6, maxHp: 6, sprite: 'dragon', anim: 'dragon-idle', scale: 5, coins: 13 },
+            { name: 'Kage Clone', hp: 5, maxHp: 5, sprite: 'reptile', anim: 'reptile-idle', scale: 5, coins: 12 }
+        ],
+        bossData: { name: 'KAGE', hp: 18, maxHp: 18, sprite: 'boss-kage', anim: 'boss-kage-idle', scale: 2, isBoss: true, coins: 50 }
     }
 };
 
@@ -318,14 +567,14 @@ class BootScene extends Phaser.Scene {
         this.load.on('progress', function(v) { bar.width = 296 * v; });
         this.load.on('loaderror', function(f) { failedAssets.add(f.key); });
 
-        // Safety timeout — if loading stalls (e.g. iOS can't load OGG), force proceed after 8s
+        // Safety timeout — if loading stalls, force proceed after 15s
         var self = this;
         this.loadTimeout = setTimeout(function() {
             if (self.scene.isActive('BootScene')) {
-                console.warn('Load timeout — forcing create()');
-                self.load.emit('complete');
+                console.warn('Load timeout — forcing scene start');
+                self.scene.start('MenuScene');
             }
-        }, 8000);
+        }, 15000);
 
         this.load.spritesheet('hiro-idle', ASSET_BASE + 'Actor/Characters/NinjaGreen/SeparateAnim/Idle.png', { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('hiro-walk', ASSET_BASE + 'Actor/Characters/NinjaGreen/SeparateAnim/Walk.png', { frameWidth: 16, frameHeight: 16 });
@@ -367,6 +616,27 @@ class BootScene extends Phaser.Scene {
         this.load.spritesheet('boss-frog', ASSET_BASE + 'Actor/Boss/GiantFrog/Idle40x40.png', { frameWidth: 40, frameHeight: 40 });
         this.load.spritesheet('boss-serpent', ASSET_BASE + 'Actor/Monsters/Snake2/Snake2.png', { frameWidth: 16, frameHeight: 16 });
 
+        // Land 3 monsters
+        this.load.spritesheet('bamboo', ASSET_BASE + 'Actor/Monsters/Bamboo/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('panda', ASSET_BASE + 'Actor/Monsters/Panda/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('bambooyellow', ASSET_BASE + 'Actor/Monsters/BambooYellow/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('owl', ASSET_BASE + 'Actor/Monsters/Owl/Owl.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('boss-bamboo', ASSET_BASE + 'Actor/Boss/GiantBamboo/Idle.png', { frameWidth: 62, frameHeight: 62 });
+
+        // Land 4 monsters
+        this.load.spritesheet('skull', ASSET_BASE + 'Actor/Monsters/Skull/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('skullblue', ASSET_BASE + 'Actor/Monsters/SkullBlue/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('spirit', ASSET_BASE + 'Actor/Monsters/Spirit/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('cyclope', ASSET_BASE + 'Actor/Monsters/Cyclope/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('boss-knight', ASSET_BASE + 'Actor/Boss/GiantRedSamurai/Idle.png', { frameWidth: 48, frameHeight: 48 });
+
+        // Land 5 monsters
+        this.load.spritesheet('spirit2', ASSET_BASE + 'Actor/Monsters/Spirit2/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('eye', ASSET_BASE + 'Actor/Monsters/Eye/Eye.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('dragon', ASSET_BASE + 'Actor/Monsters/Dragon/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('reptile', ASSET_BASE + 'Actor/Monsters/Reptile/Reptile.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet('boss-kage', ASSET_BASE + 'Actor/Boss/TenguRed/Idle.png', { frameWidth: 82, frameHeight: 82 });
+
         // Chicken sprites
         this.load.spritesheet('chicken-white', ASSET_BASE + 'Actor/Animals/Chicken/SpriteSheetWhite.png', { frameWidth: 16, frameHeight: 16 });
 
@@ -376,6 +646,9 @@ class BootScene extends Phaser.Scene {
         this.load.audio('music-story', [ASSET_BASE + 'Audio/Musics/6 - Story.ogg', MP3 + 'music-story.mp3']);
         this.load.audio('music-meadow', [ASSET_BASE + 'Audio/Musics/33 - Calm Village.ogg', MP3 + 'music-meadow.mp3']);
         this.load.audio('music-river', [ASSET_BASE + 'Audio/Musics/18 - Aquatic.ogg', MP3 + 'music-river.mp3']);
+        this.load.audio('music-bamboo', [ASSET_BASE + 'Audio/Musics/37 - Dark Forest.ogg', MP3 + 'music-bamboo.mp3']);
+        this.load.audio('music-citadel', [ASSET_BASE + 'Audio/Musics/10 - Dark Castle.ogg', MP3 + 'music-citadel.mp3']);
+        this.load.audio('music-fortress', [ASSET_BASE + 'Audio/Musics/24 - Final Area.ogg', MP3 + 'music-fortress.mp3']);
         this.load.audio('music-combat', [ASSET_BASE + 'Audio/Musics/17 - Fight.ogg', MP3 + 'music-combat.mp3']);
         this.load.audio('sfx-party', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav', MP3 + 'sfx-party.mp3']);
         this.load.audio('sfx-coin', [ASSET_BASE + 'Audio/Sounds/Bonus/Coin.wav', MP3 + 'sfx-coin.mp3']);
@@ -412,6 +685,21 @@ class BootScene extends Phaser.Scene {
         this.makeFallback('kappa', 64, 64, 0x33aa66, 16, 16);
         this.makeFallback('axolot', 64, 64, 0xdd88aa, 16, 16);
         this.makeFallback('chicken-white', 32, 16, 0xeeeeee, 16, 2);
+        // Land 3 fallbacks
+        this.makeFallback('bamboo', 64, 64, 0x2a8a2a, 16, 16);
+        this.makeFallback('panda', 64, 64, 0xdddddd, 16, 16);
+        this.makeFallback('bambooyellow', 64, 64, 0xaaaa22, 16, 16);
+        this.makeFallback('owl', 64, 64, 0x886644, 16, 16);
+        // Land 4 fallbacks
+        this.makeFallback('skull', 64, 64, 0xcccccc, 16, 16);
+        this.makeFallback('skullblue', 64, 64, 0x6688cc, 16, 16);
+        this.makeFallback('spirit', 64, 64, 0x8844aa, 16, 16);
+        this.makeFallback('cyclope', 64, 64, 0xaa4444, 16, 16);
+        // Land 5 fallbacks
+        this.makeFallback('spirit2', 64, 64, 0x6622aa, 16, 16);
+        this.makeFallback('eye', 64, 64, 0xcc2222, 16, 16);
+        this.makeFallback('dragon', 64, 64, 0x882222, 16, 16);
+        this.makeFallback('reptile', 64, 64, 0x448822, 16, 16);
 
         // Coin texture (always create -- not from asset pack)
         var cg = this.make.graphics({ add: false });
@@ -456,7 +744,9 @@ class BootScene extends Phaser.Scene {
         this.anims.create({ key: 'coin-spin-anim', frames: this.anims.generateFrameNumbers('coin-spin', { start: 0, end: 5 }), frameRate: 8, repeat: -1 });
 
         // Monster idle animations (first row = down-facing cycle)
-        var monsters = ['slime', 'butterfly', 'mollusc', 'snake', 'fish', 'bluebat', 'kappa', 'axolot'];
+        var monsters = ['slime', 'butterfly', 'mollusc', 'snake', 'fish', 'bluebat', 'kappa', 'axolot',
+            'bamboo', 'panda', 'bambooyellow', 'owl', 'skull', 'skullblue', 'spirit', 'cyclope',
+            'spirit2', 'eye', 'dragon', 'reptile'];
         for (var mi = 0; mi < monsters.length; mi++) {
             if (!failedAssets.has(monsters[mi])) {
                 this.anims.create({ key: monsters[mi] + '-idle', frames: this.anims.generateFrameNumbers(monsters[mi], { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
@@ -495,6 +785,39 @@ class BootScene extends Phaser.Scene {
         // Boss serpent (Snake2 monster sprite used as boss)
         this.makeFallback('boss-serpent', 64, 64, 0x2288aa, 16, 16);
         this.anims.create({ key: 'boss-serpent-idle', frames: this.anims.generateFrameNumbers('boss-serpent', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+
+        // Boss bamboo oni (GiantBamboo: 62x62, 6 frames)
+        if (failedAssets.has('boss-bamboo')) {
+            var bbg = this.make.graphics({ add: false });
+            for (var bbi = 0; bbi < 6; bbi++) { bbg.fillStyle(0x2a8a2a); bbg.fillRect(bbi*62+4, 4, 54, 54); }
+            bbg.generateTexture('boss-bamboo', 372, 62);
+            var bbt = this.textures.get('boss-bamboo');
+            for (bbi = 0; bbi < 6; bbi++) bbt.add(bbi, 0, bbi*62, 0, 62, 62);
+            bbg.destroy();
+        }
+        this.anims.create({ key: 'boss-bamboo-idle', frames: this.anims.generateFrameNumbers('boss-bamboo', { start: 0, end: 5 }), frameRate: 4, repeat: -1 });
+
+        // Boss shadow knight (GiantRedSamurai: 48x48, 12 frames — use first 6)
+        if (failedAssets.has('boss-knight')) {
+            var bkg = this.make.graphics({ add: false });
+            for (var bki = 0; bki < 12; bki++) { bkg.fillStyle(0x8822aa); bkg.fillRect(bki*48+4, 4, 40, 40); }
+            bkg.generateTexture('boss-knight', 576, 48);
+            var bkt = this.textures.get('boss-knight');
+            for (bki = 0; bki < 12; bki++) bkt.add(bki, 0, bki*48, 0, 48, 48);
+            bkg.destroy();
+        }
+        this.anims.create({ key: 'boss-knight-idle', frames: this.anims.generateFrameNumbers('boss-knight', { start: 0, end: 5 }), frameRate: 4, repeat: -1 });
+
+        // Boss KAGE (TenguRed: 82x82, 6 frames)
+        if (failedAssets.has('boss-kage')) {
+            var bkag = this.make.graphics({ add: false });
+            for (var bkai = 0; bkai < 6; bkai++) { bkag.fillStyle(0xcc2222); bkag.fillRect(bkai*82+4, 4, 74, 74); }
+            bkag.generateTexture('boss-kage', 492, 82);
+            var bkat = this.textures.get('boss-kage');
+            for (bkai = 0; bkai < 6; bkai++) bkat.add(bkai, 0, bkai*82, 0, 82, 82);
+            bkag.destroy();
+        }
+        this.anims.create({ key: 'boss-kage-idle', frames: this.anims.generateFrameNumbers('boss-kage', { start: 0, end: 5 }), frameRate: 4, repeat: -1 });
 
         this.time.delayedCall(300, function() { this.scene.start('MenuScene'); }, [], this);
     }
@@ -1290,7 +1613,7 @@ class MenuScene extends Phaser.Scene {
 
     startQuest() {
         gameState.ninjaCode = generateNinjaCode();
-        gameState.coins = 100; gameState.hearts = 5; gameState.grassCut = 0;
+        gameState.coins = 0; gameState.hearts = 5; gameState.grassCut = 0;
         gameState.streak = 0; gameState.bestCombo = 0; gameState.currentLand = 1;
         gameState.totalProblems = 0; gameState.totalCorrect = 0;
         gameState.inventory = []; gameState.land1Complete = false;
@@ -1364,7 +1687,7 @@ class MenuScene extends Phaser.Scene {
             var code = self.codeText.trim();
             if (/^[A-Z]+-[A-Z]+-\d{4}$/.test(code)) {
                 gameState.ninjaCode = code;
-                gameState.coins = 100; gameState.hearts = 5; gameState.grassCut = 0;
+                gameState.coins = 0; gameState.hearts = 5; gameState.grassCut = 0;
                 gameState.streak = 0; gameState.bestCombo = 0; gameState.currentLand = 1;
                 gameState.totalProblems = 0; gameState.totalCorrect = 0;
                 gameState.inventory = []; gameState.land1Complete = false;
@@ -4648,7 +4971,7 @@ class VictoryScene extends Phaser.Scene {
             btn.on('pointerover', function() { btn.setScale(1.05); });
             btn.on('pointerout', function() { btn.setScale(1.0); });
             btn.on('pointerup', function() {
-                gameState.coins = 100; gameState.hearts = 5; gameState.grassCut = 0;
+                gameState.coins = 0; gameState.hearts = 5; gameState.grassCut = 0;
                 gameState.streak = 0; gameState.bestCombo = 0; gameState.currentLand = 1;
                 gameState.totalProblems = 0; gameState.totalCorrect = 0;
                 gameState.inventory = []; gameState.land1Complete = false;
@@ -4878,7 +5201,7 @@ class DeathScene extends Phaser.Scene {
             btn.on('pointerout', function() { btn.setScale(1.0); });
             btn.on('pointerup', function() {
                 // Full reset
-                gameState.coins = 100; gameState.hearts = 5; gameState.grassCut = 0;
+                gameState.coins = 0; gameState.hearts = 5; gameState.grassCut = 0;
                 gameState.streak = 0; gameState.bestCombo = 0; gameState.currentLand = 1;
                 gameState.totalProblems = 0; gameState.totalCorrect = 0;
                 gameState.inventory = []; gameState.land1Complete = false;
