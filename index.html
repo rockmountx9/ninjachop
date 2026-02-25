@@ -598,20 +598,20 @@ class SplashScene extends Phaser.Scene {
         var spirited = this.add.text(w/2, logoY, 'SPIRITED MINDS', {
             fontFamily: 'Nunito', fontSize: '34px', fontStyle: '900', color: '#f5c842',
             stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5).setAlpha(0);
+        }).setOrigin(0.5).setAlpha(0).setResolution(2);
         this.tweens.add({ targets: spirited, alpha: 1, duration: 1000, delay: 300, ease: 'Quad.easeOut' });
 
         // Subtitle
         var subtitle = this.add.text(w/2, logoY + 50, 'a subsidiary of VanderEls Corp.', {
             fontFamily: 'Nunito', fontSize: '16px', fontStyle: '600', color: '#8888aa',
             stroke: '#000000', strokeThickness: 2
-        }).setOrigin(0.5).setAlpha(0);
+        }).setOrigin(0.5).setAlpha(0).setResolution(2);
         this.tweens.add({ targets: subtitle, alpha: 1, duration: 800, delay: 900, ease: 'Quad.easeOut' });
 
         // "Brought to you by" — small text above
         var brought = this.add.text(w/2, logoY - 40, 'Brought to you by', {
             fontFamily: 'Nunito', fontSize: '14px', fontStyle: '600', color: '#555566'
-        }).setOrigin(0.5).setAlpha(0);
+        }).setOrigin(0.5).setAlpha(0).setResolution(2);
         this.tweens.add({ targets: brought, alpha: 1, duration: 600, delay: 200 });
 
         // Decorative line
