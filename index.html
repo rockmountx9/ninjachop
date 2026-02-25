@@ -598,20 +598,20 @@ class SplashScene extends Phaser.Scene {
         var spirited = this.add.text(w/2, logoY, 'GIFTED YOUNGSTERS', {
             fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#f5c842',
             stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5).setAlpha(0).setResolution(2);
+        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
         this.tweens.add({ targets: spirited, alpha: 1, duration: 1000, delay: 300, ease: 'Quad.easeOut' });
 
         // Subtitle
         var subtitle = this.add.text(w/2, logoY + 50, 'Apps made for ADHD and other\nNeurodivergent children', {
             fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#8888aa',
             stroke: '#000000', strokeThickness: 2, align: 'center', lineSpacing: 4
-        }).setOrigin(0.5).setAlpha(0).setResolution(2);
+        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
         this.tweens.add({ targets: subtitle, alpha: 1, duration: 800, delay: 900, ease: 'Quad.easeOut' });
 
         // "Brought to you by" — small text above
         var brought = this.add.text(w/2, logoY - 40, 'Brought to you by', {
             fontFamily: 'Nunito', fontSize: '14px', fontStyle: '600', color: '#555566'
-        }).setOrigin(0.5).setAlpha(0).setResolution(2);
+        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
         this.tweens.add({ targets: brought, alpha: 1, duration: 600, delay: 200 });
 
         // Decorative line
@@ -646,7 +646,7 @@ class BootScene extends Phaser.Scene {
         var w = this.scale.width, h = this.scale.height;
         this.add.rectangle(w/2, h/2, w, h, COLORS.darkBg);
         var bar = this.add.rectangle(w/2 - 148, h/2 + 30, 0, 20, COLORS.accent).setOrigin(0, 0.5);
-        this.add.text(w/2, h/2 - 60, 'MATH CHOP!', { fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5);
+        this.add.text(w/2, h/2 - 60, 'MATH CHOP!', { fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5).setResolution(window.devicePixelRatio || 3);
         this.load.on('progress', function(v) { bar.width = 296 * v; });
         this.load.on('loaderror', function(f) { failedAssets.add(f.key); });
 
