@@ -584,6 +584,7 @@ class SplashScene extends Phaser.Scene {
 
     create() {
         var w = this.scale.width, h = this.scale.height, self = this;
+        this.transitioning = false;
         this.cameras.main.setBackgroundColor('#000000');
 
         // Fade in from black
@@ -617,27 +618,21 @@ class SplashScene extends Phaser.Scene {
         var line = this.add.rectangle(w/2, logoY + 85, 0, 2, 0x333344);
         this.tweens.add({ targets: line, width: 200, duration: 800, delay: 1200, ease: 'Quad.easeOut' });
 
-        // Transition to BootScene after 3.5s
-        this.time.delayedCall(3500, function() {
-            self.cameras.main.fadeOut(500);
-            self.time.delayedCall(500, function() {
+        function goToBoot() {
+            if (self.transitioning) return;
+            self.transitioning = true;
+            self.cameras.main.fadeOut(300);
+            self.time.delayedCall(300, function() {
                 self.scene.start('BootScene');
             });
-        });
+        }
 
-        // Skip on click/tap
-        this.input.on('pointerdown', function() {
-            self.cameras.main.fadeOut(300);
-            self.time.delayedCall(300, function() {
-                self.scene.start('BootScene');
-            });
-        });
-        this.input.keyboard.on('keydown', function() {
-            self.cameras.main.fadeOut(300);
-            self.time.delayedCall(300, function() {
-                self.scene.start('BootScene');
-            });
-        });
+        // Transition to BootScene after 3.5s
+        this.time.delayedCall(3500, goToBoot);
+
+        // Skip on click/tap/key
+        this.input.on('pointerdown', goToBoot);
+        this.input.keyboard.on('keydown', goToBoot);
     }
 }
 
@@ -7009,10 +7004,17 @@ class UIScene extends Phaser.Scene {
 // ============================================================
 // CONFIG & LAUNCH
 // ============================================================
+// Dynamic game dimensions — fill screen on any device
+var _vw = window.innerWidth || 480;
+var _vh = window.innerHeight || 854;
+var _aspect = _vw / _vh;
+var GAME_H = 960;
+var GAME_W = Math.max(540, Math.min(960, Math.round(GAME_H * _aspect)));
+
 var config = {
     type: Phaser.AUTO,
-    width: 540,
-    height: 960,
+    width: GAME_W,
+    height: GAME_H,
     backgroundColor: '#1a1a2e',
     parent: 'game-container',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, expandParent: true },
