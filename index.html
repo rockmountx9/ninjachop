@@ -159,6 +159,7 @@ var LAND_CONFIGS = {
                   treeHighlight: 0x2ecc40, grass: 0x228B22, grassBlade1: 0x2ecc40,
                   grassBlade2: 0x27ae60, houseBrown: 0xb8860b, roofRed: 0x8b0000 },
         problemPools: { easy: LAND1_EASY, medium: LAND1_MEDIUM, hard: LAND1_HARD },
+        trapTheme: { name: 'thorns', color1: '#5a2a0a', color2: '#8B4513', glowColor: '#228B22' },
         grassDensity: 0.35,
         combatBg: {
             skyTop: 0x87CEEB, skyBot: 0x5BA3D9,
@@ -173,16 +174,16 @@ var LAND_CONFIGS = {
             [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
             [2,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,2,0,0,0,0,0,0,2],
-            [2,0,0,5,0,0,0,5,6,0,4,0,0,0,5,0,0,5,0,2],
-            [2,0,0,0,0,0,0,0,0,2,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,5,0,0,0,9,6,0,4,0,0,0,5,0,0,5,0,2],
+            [2,0,0,0,0,0,0,0,0,2,4,0,0,0,8,0,0,0,0,2],
             [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,0,2,0,0,2],
-            [2,0,0,0,0,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,0,0,8,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
             [2,0,0,0,5,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
             [2,0,0,2,0,6,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
             [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
             [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
             [2,0,2,0,0,0,2,0,0,0,4,6,0,2,0,0,0,0,2,2],
-            [2,0,0,0,0,0,0,0,0,2,4,0,0,0,0,0,5,0,0,2],
+            [2,0,0,0,0,0,0,0,0,2,4,0,0,0,8,0,5,0,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,2,0,0,0,0,0,0,2],
             [2,0,0,5,0,0,0,5,0,0,4,0,0,0,5,0,0,5,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,0,0,3,3,3,0,0,2],
@@ -219,6 +220,7 @@ var LAND_CONFIGS = {
                   treeHighlight: 0x2eaa40, grass: 0x1a7a22, grassBlade1: 0x28bb3a,
                   grassBlade2: 0x22a050, houseBrown: 0xa87a0b, roofRed: 0x7b0000 },
         problemPools: { easy: LAND2_EASY, medium: LAND2_MEDIUM, hard: LAND2_HARD },
+        trapTheme: { name: 'whirlpool', color1: '#2070b6', color2: '#1a4a7a', glowColor: '#5dade2' },
         grassDensity: 0.25,
         combatBg: {
             skyTop: 0x6BA3CB, skyBot: 0x4A7A9A,
@@ -235,19 +237,19 @@ var LAND_CONFIGS = {
             [2,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,2],
             [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
             [2,0,5,0,0,0,0,2,0,0,4,0,0,2,0,0,0,5,0,2],
-            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,8,0,0,0,0,2],
             [2,0,0,2,0,0,0,0,6,0,4,0,0,0,0,0,2,0,0,2],
-            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,8,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
             [2,0,0,0,0,0,3,3,3,3,4,3,3,3,0,0,0,0,0,2],
             [2,3,3,3,3,4,3,3,3,3,4,3,3,3,4,3,3,3,3,2],
             [2,3,3,3,3,4,3,3,3,3,4,3,3,3,4,3,3,3,3,2],
             [2,0,0,0,0,0,3,3,3,3,4,3,3,3,0,0,0,0,0,2],
-            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,0,0,8,0,0,0,4,0,0,0,0,0,0,0,0,2],
             [2,0,2,0,0,4,4,4,4,4,4,4,4,4,4,0,0,2,0,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,6,0,0,0,0,0,0,2],
-            [2,0,0,5,0,0,0,2,0,0,4,0,0,2,0,0,5,0,0,2],
+            [2,0,0,5,0,0,0,2,9,0,4,0,0,2,0,0,5,0,0,2],
             [2,0,0,0,0,0,0,0,6,0,4,0,0,0,0,0,0,0,0,2],
-            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,3,3,0,0,0,2],
+            [2,0,2,0,8,0,0,0,0,0,4,0,0,0,3,3,0,0,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,0,3,3,3,3,0,0,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,0,3,3,0,0,0,2],
             [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
@@ -280,6 +282,7 @@ var LAND_CONFIGS = {
                   treeHighlight: 0x2a7a2a, grass: 0x1a6a1a, grassBlade1: 0x2a8a2a,
                   grassBlade2: 0x1a7a1a, houseBrown: 0x7a6a2a, roofRed: 0x4a6a1a },
         problemPools: { easy: LAND3_EASY, medium: LAND3_MEDIUM, hard: LAND3_HARD },
+        trapTheme: { name: 'spikes', color1: '#6a8a2a', color2: '#4a6a1a', glowColor: '#aacc44' },
         grassDensity: 0.30,
         combatBg: {
             skyTop: 0x2a5a2a, skyBot: 0x1a4a1a,
@@ -295,17 +298,17 @@ var LAND_CONFIGS = {
             [2,0,0,0,2,0,0,0,0,0,7,0,0,0,0,2,0,0,0,2],
             [2,0,2,0,0,0,2,0,0,0,4,0,0,2,0,0,0,2,0,2],
             [2,0,0,0,0,2,0,0,5,0,4,0,5,0,2,0,0,0,0,2],
-            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,2],
+            [2,0,2,0,0,0,0,8,0,0,4,0,0,0,0,0,0,2,0,2],
             [2,0,0,0,2,0,0,2,0,0,4,0,2,0,0,2,0,0,0,2],
-            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,8,0,0,0,0,0,0,4,0,9,0,0,0,0,0,0,2],
             [2,2,0,0,0,0,0,0,6,0,4,0,6,0,0,0,0,0,2,2],
-            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,0,8,0,2,0,0,0,2],
             [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
             [2,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,2],
             [2,0,0,0,0,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
-            [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,0,0,2,0,2],
+            [2,0,2,0,8,0,0,0,0,0,4,0,0,0,0,0,0,2,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
-            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,8,0,0,0,0,2],
             [2,0,2,0,0,0,0,0,0,0,4,0,0,0,0,3,3,0,0,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,0,3,3,3,3,0,2],
             [2,0,0,0,2,0,0,5,0,0,4,0,0,0,0,3,3,0,0,2],
@@ -340,6 +343,7 @@ var LAND_CONFIGS = {
                   treeHighlight: 0x4a4a6a, grass: 0x2a2a3a, grassBlade1: 0x3a3a5a,
                   grassBlade2: 0x2a2a4a, houseBrown: 0x4a4a4a, roofRed: 0x5a2a5a },
         problemPools: { easy: LAND4_EASY, medium: LAND4_MEDIUM, hard: LAND4_HARD },
+        trapTheme: { name: 'fire', color1: '#ff4400', color2: '#ffaa00', glowColor: '#880000' },
         grassDensity: 0.20,
         combatBg: {
             skyTop: 0x1a1a2e, skyBot: 0x0a0a1e,
@@ -355,18 +359,18 @@ var LAND_CONFIGS = {
             [2,0,0,0,0,2,2,0,0,0,7,0,0,0,2,2,0,0,0,2],
             [2,0,0,0,0,0,2,0,0,0,4,0,0,2,0,0,0,0,0,2],
             [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
-            [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
-            [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
+            [2,0,0,0,0,8,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
+            [2,2,0,0,0,0,0,0,0,0,4,0,9,0,8,0,0,0,2,2],
             [2,0,0,0,2,0,0,0,6,0,4,0,6,0,0,2,0,0,0,2],
             [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
-            [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
+            [2,0,0,0,0,0,0,8,0,0,4,0,0,0,0,0,0,0,0,2],
             [2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,2],
             [2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,3,3,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
-            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,8,2,0,0,0,2],
             [2,0,0,0,0,0,0,2,0,0,4,0,0,2,0,0,0,0,0,2],
             [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
-            [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
+            [2,2,0,0,0,0,8,0,0,0,4,0,0,0,0,0,0,0,2,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,0,2],
             [2,0,0,0,2,0,0,0,0,0,4,0,3,3,3,3,3,0,0,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,0,2],
@@ -400,6 +404,7 @@ var LAND_CONFIGS = {
                   treeHighlight: 0x5a2a2a, grass: 0x3a1a0a, grassBlade1: 0x5a2a1a,
                   grassBlade2: 0x4a1a0a, houseBrown: 0x3a2a2a, roofRed: 0x6a1a1a },
         problemPools: { easy: LAND5_EASY, medium: LAND5_MEDIUM, hard: LAND5_HARD },
+        trapTheme: { name: 'lava', color1: '#ff2200', color2: '#ff8800', glowColor: '#440000' },
         grassDensity: 0.15,
         combatBg: {
             skyTop: 0x1a0a0a, skyBot: 0x0a0000,
@@ -415,17 +420,17 @@ var LAND_CONFIGS = {
             [2,0,0,2,0,0,0,0,0,0,7,0,0,0,0,0,0,2,0,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
             [2,2,0,0,0,0,0,5,0,0,4,0,0,5,0,0,0,0,2,2],
-            [2,0,0,0,2,0,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
-            [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,0,2,0,0,0,8,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,9,8,2,0,0,0,0,2],
             [2,2,0,0,0,0,0,0,6,0,4,0,6,0,0,0,0,0,2,2],
-            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
+            [2,0,0,8,0,2,0,0,0,0,4,0,0,0,0,2,0,0,0,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
             [2,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,2],
             [2,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,3,3,3,2],
             [2,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,2],
-            [2,0,0,0,0,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,0,8,2,0,0,0,0,4,0,0,0,2,0,0,0,0,2],
             [2,2,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,2,2],
-            [2,0,0,0,0,0,2,0,0,0,4,0,0,0,2,0,0,0,0,2],
+            [2,0,0,0,0,0,2,0,0,0,4,0,0,8,2,0,0,0,0,2],
             [2,0,0,5,0,0,0,0,0,0,4,0,0,0,0,0,5,0,0,2],
             [2,2,0,0,0,0,0,0,0,0,4,0,0,3,3,3,0,0,2,2],
             [2,0,0,0,0,2,0,0,0,0,4,0,3,3,3,3,3,0,0,2],
@@ -662,6 +667,7 @@ class BootScene extends Phaser.Scene {
         this.load.audio('sfx-combo3', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp1.wav', MP3 + 'sfx-party.mp3']);
         this.load.audio('sfx-shadow', [ASSET_BASE + 'Audio/Sounds/Bonus/PowerUp2.wav', MP3 + 'sfx-shadow.mp3']);
         this.load.audio('sfx-shop', [ASSET_BASE + 'Audio/Sounds/Bonus/Gold2.wav', MP3 + 'sfx-shop.mp3']);
+        this.load.audio('sfx-trap', [ASSET_BASE + 'Audio/Sounds/Elemental/Fire.wav', MP3 + 'sfx-trap.mp3']);
     }
 
     create() {
@@ -1919,7 +1925,7 @@ class WorldScene extends Phaser.Scene {
         var sp = landConfig.spawnPos;
         for (r = sp.r-1; r <= sp.r+1; r++) for (c = sp.c-1; c <= sp.c+1; c++) {
             if (r < 1 || r >= ROWS-1 || c < 1 || c >= COLS-1) continue;
-            if (this.map[r][c] === 6 || this.map[r][c] === 4 || this.map[r][c] === 7) continue;
+            if (this.map[r][c] === 6 || this.map[r][c] === 4 || this.map[r][c] === 7 || this.map[r][c] === 8 || this.map[r][c] === 9) continue;
             this.map[r][c] = 0;
         }
 
@@ -1961,6 +1967,62 @@ class WorldScene extends Phaser.Scene {
                     gfx.fillStyle(0x111111, 1); gfx.fillCircle(cx-3, cy-7, 2); gfx.fillCircle(cx+3, cy-7, 2);
                     gfx.fillStyle(0x111111, 1); gfx.fillRect(cx-4, cy-2, 8, 2);
                     gfx.fillStyle(0x8800ff, 0.15); gfx.fillRect(x-4, y-4, T+8, T+8);
+                } else if (tile === 8) {
+                    // Trap tile — themed per land
+                    var tt = landConfig.trapTheme;
+                    var tc1 = Phaser.Display.Color.HexStringToColor(tt.color1).color;
+                    var tc2 = Phaser.Display.Color.HexStringToColor(tt.color2).color;
+                    var tgc = Phaser.Display.Color.HexStringToColor(tt.glowColor).color;
+                    if (tt.name === 'thorns') {
+                        gfx.fillStyle(tc1, 1); gfx.fillRect(x+6, y+6, T-12, T-12);
+                        gfx.fillStyle(tc2, 1);
+                        gfx.fillTriangle(cx-10, cy+8, cx-6, cy-8, cx-2, cy+8);
+                        gfx.fillTriangle(cx+2, cy+8, cx+6, cy-10, cx+10, cy+8);
+                        gfx.fillTriangle(cx-6, cy+4, cx, cy-12, cx+6, cy+4);
+                        gfx.fillStyle(tgc, 0.3); gfx.fillCircle(cx, cy, 18);
+                    } else if (tt.name === 'whirlpool') {
+                        gfx.fillStyle(tc2, 0.8); gfx.fillCircle(cx, cy, 20);
+                        gfx.fillStyle(tc1, 0.6); gfx.fillCircle(cx, cy, 14);
+                        gfx.fillStyle(tgc, 0.5); gfx.fillCircle(cx, cy, 8);
+                        gfx.fillStyle(0xffffff, 0.3); gfx.fillCircle(cx, cy, 3);
+                    } else if (tt.name === 'spikes') {
+                        gfx.fillStyle(0x222211, 1); gfx.fillRect(x+4, y+4, T-8, T-8);
+                        gfx.fillStyle(tc2, 1);
+                        gfx.fillTriangle(cx-12, cy+10, cx-8, cy-6, cx-4, cy+10);
+                        gfx.fillTriangle(cx-4, cy+10, cx, cy-8, cx+4, cy+10);
+                        gfx.fillTriangle(cx+4, cy+10, cx+8, cy-6, cx+12, cy+10);
+                        gfx.fillStyle(tc1, 1);
+                        gfx.fillTriangle(cx-8, cy+10, cx-4, cy-4, cx, cy+10);
+                        gfx.fillStyle(tgc, 0.25); gfx.fillCircle(cx, cy, 16);
+                    } else if (tt.name === 'fire') {
+                        gfx.fillStyle(0x333333, 1); gfx.fillRect(x+4, y+4, T-8, T-8);
+                        gfx.fillStyle(tc1, 0.9);
+                        gfx.fillTriangle(cx-8, cy+12, cx, cy-14, cx+8, cy+12);
+                        gfx.fillStyle(tc2, 0.8);
+                        gfx.fillTriangle(cx-5, cy+12, cx, cy-6, cx+5, cy+12);
+                        gfx.fillTriangle(cx-12, cy+10, cx-6, cy-4, cx, cy+10);
+                        gfx.fillTriangle(cx, cy+10, cx+6, cy-4, cx+12, cy+10);
+                        gfx.fillStyle(tgc, 0.35); gfx.fillCircle(cx, cy, 18);
+                    } else if (tt.name === 'lava') {
+                        gfx.fillStyle(tgc, 1); gfx.fillRect(x+4, y+4, T-8, T-8);
+                        gfx.fillStyle(tc1, 0.8); gfx.fillCircle(cx, cy, 16);
+                        gfx.fillStyle(tc2, 0.6); gfx.fillCircle(cx-4, cy+2, 8);
+                        gfx.fillStyle(tc2, 0.6); gfx.fillCircle(cx+5, cy-3, 7);
+                        gfx.fillStyle(0xffcc00, 0.4); gfx.fillCircle(cx, cy, 5);
+                    }
+                } else if (tile === 9) {
+                    // Shop building tile — ornate merchant shop
+                    gfx.fillStyle(0x5a3a1a, 1); gfx.fillRect(x+2, y+2, T-4, T-4);
+                    gfx.fillStyle(0x8b0000, 1);
+                    gfx.fillTriangle(cx-24, cy-8, cx, cy-28, cx+24, cy-8);
+                    gfx.fillStyle(0x4a2a0a, 1); gfx.fillRect(cx-6, cy+6, 12, 18);
+                    gfx.fillStyle(0xf5c842, 0.6); gfx.fillRect(cx-4, cy+8, 8, 14);
+                    gfx.fillStyle(0x87ceeb, 1); gfx.fillRect(cx-18, cy-2, 10, 10);
+                    gfx.fillRect(cx+8, cy-2, 10, 10);
+                    gfx.fillStyle(0xf5c842, 0.8);
+                    gfx.fillCircle(cx, cy-18, 6);
+                    gfx.fillStyle(0xf5c842, 1);
+                    gfx.fillCircle(cx, cy-18, 3);
                 }
             }
         }
@@ -1994,6 +2056,20 @@ class WorldScene extends Phaser.Scene {
                     gs.add(this.add.rectangle(4, -4, 5, 12, colors.grassBlade2));
                     gs.add(this.add.rectangle(-2, -8, 4, 10, colors.grassBlade1));
                     this.grassSprites[r+','+c] = gs;
+                }
+            }
+        }
+
+        // === TRAP TILES ===
+        this.trapTiles = [];
+        this.trapImmunity = false;
+        this.trapGfx = this.add.graphics().setDepth(2);
+        this.trapParticles = [];
+        var trapTheme = landConfig.trapTheme;
+        for (r = 0; r < ROWS; r++) {
+            for (c = 0; c < COLS; c++) {
+                if (this.map[r][c] === 8) {
+                    this.trapTiles.push({ r: r, c: c, x: c * T + T/2, y: r * T + T/2 });
                 }
             }
         }
@@ -2411,7 +2487,7 @@ class WorldScene extends Phaser.Scene {
         if (ui && ui.scene.isActive()) ui.events.emit('updateCoins', gameState.coins);
     }
 
-    update() {
+    update(time, delta) {
         if (!this.player || !this.player.body) return;
         // Keep touch controls fixed to camera
         if (this.touchContainer) {
@@ -2432,9 +2508,9 @@ class WorldScene extends Phaser.Scene {
         else if (this.cursors.down.isDown || this.wasd.S.isDown || td.down) vy = speed;
         if (vx !== 0 && vy !== 0) { vx *= 0.707; vy *= 0.707; }
 
-        // Tile collision - block on trees (2), water (3), houses (5), NPCs (6)
+        // Tile collision - block on trees (2), water (3), houses (5), NPCs (6), shop building (9)
         var T = this.T, m = 10;
-        var blocked = function(tile) { return tile === 2 || tile === 3 || tile === 5 || tile === 6; };
+        var blocked = function(tile) { return tile === 2 || tile === 3 || tile === 5 || tile === 6 || tile === 9; };
         if (vx < 0) { var nc = Math.floor((this.player.x + vx/60 - m) / T); if (this.map[Math.floor(this.player.y/T)] && blocked(this.map[Math.floor(this.player.y/T)][nc])) vx = 0; }
         if (vx > 0) { var nc2 = Math.floor((this.player.x + vx/60 + m) / T); if (this.map[Math.floor(this.player.y/T)] && blocked(this.map[Math.floor(this.player.y/T)][nc2])) vx = 0; }
         if (vy < 0) { var nr = Math.floor((this.player.y + vy/60 - m) / T); if (this.map[nr] && blocked(this.map[nr][Math.floor(this.player.x/T)])) vy = 0; }
@@ -2463,6 +2539,46 @@ class WorldScene extends Phaser.Scene {
         }
         this.shadow.setPosition(this.player.x, this.player.y+20);
 
+        // === TRAP ANIMATION + COLLISION ===
+        if (this.trapTiles.length > 0 && this.trapGfx) {
+            var tt = this.landConfig.trapTheme;
+            var tgc = Phaser.Display.Color.HexStringToColor(tt.glowColor).color;
+            var tc2 = Phaser.Display.Color.HexStringToColor(tt.color2).color;
+            this.trapGfx.clear();
+            var pulse = 0.15 + 0.12 * Math.sin(time * 0.003);
+            for (var ti = 0; ti < this.trapTiles.length; ti++) {
+                var trap = this.trapTiles[ti];
+                // Pulsing glow circle
+                this.trapGfx.fillStyle(tgc, pulse);
+                this.trapGfx.fillCircle(trap.x, trap.y, 22 + 4 * Math.sin(time * 0.004 + ti));
+                // Spark particles (occasional)
+                if (Math.random() < 0.03) {
+                    var sparkX = trap.x + Phaser.Math.Between(-12, 12);
+                    var sparkY = trap.y;
+                    this.trapParticles.push({ x: sparkX, y: sparkY, vy: -0.8, life: 30, color: tc2 });
+                }
+            }
+            // Update + draw particles
+            for (var pi = this.trapParticles.length - 1; pi >= 0; pi--) {
+                var p = this.trapParticles[pi];
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) { this.trapParticles.splice(pi, 1); continue; }
+                var pa = p.life / 30;
+                this.trapGfx.fillStyle(p.color, pa);
+                this.trapGfx.fillCircle(p.x, p.y, 2 + pa);
+            }
+
+            // Trap collision check
+            if (!this.trapImmunity) {
+                var pr = Math.floor(this.player.y / T);
+                var pc = Math.floor(this.player.x / T);
+                if (this.map[pr] && this.map[pr][pc] === 8) {
+                    this.trapHit(pr, pc);
+                }
+            }
+        }
+
         // Overworld enemy collision check
         if (!this.encounterImmunity) {
             for (var ei = 0; ei < this.owEnemies.length; ei++) {
@@ -2474,6 +2590,76 @@ class WorldScene extends Phaser.Scene {
                     break;
                 }
             }
+        }
+    }
+
+    // === TRAP HIT ===
+    trapHit(tr, tc) {
+        var self = this;
+        var T = this.T;
+        this.trapImmunity = true;
+
+        // Damage
+        gameState.hearts -= 1;
+        var ui = this.scene.get('UIScene');
+        if (ui && ui.scene.isActive()) ui.events.emit('updateHearts');
+
+        // Sound
+        try { this.sound.play('sfx-trap', { volume: 0.5 }); } catch(e) {}
+
+        // Red flash on player
+        this.player.setTint(0xff0000);
+
+        // Camera shake
+        this.cameras.main.shake(200, 0.01);
+
+        // Knockback — push player away from trap center
+        var trapCX = tc * T + T/2, trapCY = tr * T + T/2;
+        var dx = this.player.x - trapCX, dy = this.player.y - trapCY;
+        var len = Math.sqrt(dx*dx + dy*dy) || 1;
+        var kbDist = 30;
+        var newX = this.player.x + (dx / len) * kbDist;
+        var newY = this.player.y + (dy / len) * kbDist;
+        // Clamp to world bounds
+        newX = Phaser.Math.Clamp(newX, T, (this.COLS - 1) * T);
+        newY = Phaser.Math.Clamp(newY, T, (this.ROWS - 1) * T);
+        // Check blocked tiles at destination
+        var destR = Math.floor(newY / T), destC = Math.floor(newX / T);
+        if (this.map[destR] && (this.map[destR][destC] === 2 || this.map[destR][destC] === 3 || this.map[destR][destC] === 5)) {
+            newX = this.player.x; newY = this.player.y;
+        }
+        this.tweens.add({ targets: this.player, x: newX, y: newY, duration: 150, ease: 'Quad.easeOut' });
+
+        // Floating damage text
+        var dmgText = this.add.text(this.player.x, this.player.y - 30, '-1', {
+            fontFamily: 'Nunito', fontSize: '28px', fontStyle: '900', color: '#ff4444',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5).setDepth(200);
+        this.tweens.add({
+            targets: dmgText, y: dmgText.y - 40, alpha: 0, duration: 800,
+            onComplete: function() { dmgText.destroy(); }
+        });
+
+        // Clear tint after 300ms
+        this.time.delayedCall(300, function() {
+            if (self.player && self.player.active) self.player.clearTint();
+        });
+
+        // Immunity cooldown 1.5s
+        this.time.delayedCall(1500, function() { self.trapImmunity = false; });
+
+        // Death check
+        if (gameState.hearts <= 0) {
+            gameState.hearts = 0;
+            this.time.delayedCall(500, function() {
+                try { if (self.bgm) self.bgm.stop(); } catch(e) {}
+                self.scene.stop('UIScene');
+                self.scene.start('DeathScene', {
+                    problems: gameState.totalProblems,
+                    correct: gameState.totalCorrect,
+                    bestCombo: gameState.bestCombo
+                });
+            });
         }
     }
 
@@ -6221,7 +6407,7 @@ class VictoryScene extends Phaser.Scene {
 }
 
 // ============================================================
-// SHOP SCENE
+// SHOP SCENE — 2D Side-Scroll Interior
 // ============================================================
 class ShopScene extends Phaser.Scene {
     constructor() { super({ key: 'ShopScene' }); }
@@ -6232,99 +6418,300 @@ class ShopScene extends Phaser.Scene {
 
     create() {
         var w = 480, h = 854, self = this;
-        this.add.rectangle(w/2, h/2, w, h, 0x1a1a2e);
+        var gfx = this.add.graphics();
 
-        // Title
-        this.add.text(w/2, 60, 'MERCHANT SHOP', {
-            fontFamily: 'Nunito', fontSize: '36px', fontStyle: '900', color: '#f5c842',
-            stroke: '#000000', strokeThickness: 4
+        // === BACK WALL (wood planks) ===
+        for (var py = 0; py < 470; py += 28) {
+            var plankColor = py % 56 === 0 ? 0x7a5a2a : 0x6a4a1a;
+            gfx.fillStyle(plankColor, 1);
+            gfx.fillRect(0, py, w, 26);
+            gfx.fillStyle(0x4a3a0a, 0.4);
+            gfx.fillRect(0, py + 25, w, 3);
+        }
+
+        // === WINDOW (center-top) ===
+        gfx.fillStyle(0x5a3a1a, 1);
+        gfx.fillRect(190, 30, 100, 90);
+        gfx.fillStyle(0x87ceeb, 0.8);
+        gfx.fillRect(196, 36, 88, 78);
+        // Cross-bars
+        gfx.fillStyle(0x5a3a1a, 1);
+        gfx.fillRect(196, 72, 88, 5);
+        gfx.fillRect(237, 36, 5, 78);
+        // Light ray
+        gfx.fillStyle(0xffeeaa, 0.06);
+        gfx.fillTriangle(200, 114, 280, 114, 300, 470);
+        gfx.fillTriangle(200, 114, 180, 470, 280, 114);
+
+        // === FLOOR (darker vertical planks) ===
+        var floorY = 470;
+        for (var fx = 0; fx < w; fx += 36) {
+            var floorC = fx % 72 === 0 ? 0x4a3218 : 0x3a2810;
+            gfx.fillStyle(floorC, 1);
+            gfx.fillRect(fx, floorY, 34, h - floorY);
+            gfx.fillStyle(0x2a1a08, 0.5);
+            gfx.fillRect(fx + 33, floorY, 3, h - floorY);
+        }
+        // Floor/wall seam
+        gfx.fillStyle(0x3a2a0a, 1);
+        gfx.fillRect(0, floorY - 4, w, 8);
+
+        // === SHELVES (2 rows x 2 columns) ===
+        var shelfPositions = [
+            { x: 120, y: 160 }, { x: 360, y: 160 },
+            { x: 120, y: 310 }, { x: 360, y: 310 }
+        ];
+        for (var si = 0; si < shelfPositions.length; si++) {
+            var sp = shelfPositions[si];
+            // Shelf plank
+            gfx.fillStyle(0x6a4a1a, 1);
+            gfx.fillRect(sp.x - 55, sp.y + 40, 110, 10);
+            // Brackets
+            gfx.fillStyle(0x888888, 1);
+            gfx.fillRect(sp.x - 40, sp.y + 40, 6, 18);
+            gfx.fillRect(sp.x + 34, sp.y + 40, 6, 18);
+        }
+
+        // === COUNTER (right side, floor level) ===
+        var counterX = 340, counterY = floorY - 10;
+        gfx.fillStyle(0x6a4a1a, 1);
+        gfx.fillRect(counterX - 10, counterY, 150, 60);
+        gfx.fillStyle(0x7a5a2a, 1);
+        gfx.fillRect(counterX - 14, counterY - 6, 158, 10);
+        // Cabinet doors
+        gfx.fillStyle(0x5a3a0a, 1);
+        gfx.fillRect(counterX + 5, counterY + 15, 50, 35);
+        gfx.fillRect(counterX + 65, counterY + 15, 50, 35);
+        // Knobs
+        gfx.fillStyle(0xccaa44, 1);
+        gfx.fillCircle(counterX + 48, counterY + 32, 3);
+        gfx.fillCircle(counterX + 108, counterY + 32, 3);
+
+        // === LANTERNS (two on wall) ===
+        var lanternPositions = [{ x: 60, y: 80 }, { x: 420, y: 80 }];
+        for (var li = 0; li < lanternPositions.length; li++) {
+            var lp = lanternPositions[li];
+            // Chain
+            gfx.fillStyle(0x666666, 1);
+            gfx.fillRect(lp.x - 1, lp.y - 30, 2, 30);
+            // Body
+            gfx.fillStyle(0x555555, 1);
+            gfx.fillRect(lp.x - 8, lp.y, 16, 22);
+            gfx.fillStyle(0x444444, 1);
+            gfx.fillRect(lp.x - 10, lp.y - 2, 20, 4);
+            gfx.fillRect(lp.x - 10, lp.y + 20, 20, 4);
+        }
+        // Animated flame flicker
+        for (li = 0; li < lanternPositions.length; li++) {
+            var flameX = lanternPositions[li].x, flameY = lanternPositions[li].y + 10;
+            var flame = this.add.circle(flameX, flameY, 5, 0xff8800, 0.8);
+            this.tweens.add({
+                targets: flame, scaleX: { from: 0.8, to: 1.3 }, scaleY: { from: 1.0, to: 1.4 },
+                alpha: { from: 0.6, to: 1.0 }, duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+                delay: li * 200
+            });
+            // Warm glow
+            var glow = this.add.circle(flameX, flameY, 30, 0xff8800, 0.06);
+            this.tweens.add({
+                targets: glow, alpha: { from: 0.04, to: 0.08 }, scaleX: { from: 0.9, to: 1.1 },
+                scaleY: { from: 0.9, to: 1.1 }, duration: 600, yoyo: true, repeat: -1
+            });
+        }
+
+        // === EXIT DOOR (left wall) ===
+        gfx.fillStyle(0x5a3a1a, 1);
+        gfx.fillRect(12, floorY - 80, 50, 80);
+        gfx.fillStyle(0x4a2a0a, 1);
+        gfx.fillRect(16, floorY - 76, 42, 72);
+        gfx.fillStyle(0xccaa44, 1);
+        gfx.fillCircle(50, floorY - 40, 4);
+        var exitZone = this.add.rectangle(37, floorY - 40, 60, 90, 0x000000, 0)
+            .setInteractive({ useHandCursor: true });
+        var exitLabel = this.add.text(37, floorY - 90, 'EXIT', {
+            fontFamily: 'Nunito', fontSize: '14px', fontStyle: '800', color: '#ccaa44',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: exitLabel, y: floorY - 94, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        exitZone.on('pointerup', function() {
+            self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
+        });
+
+        // === HIRO (left side, on floor) ===
+        var hiro = this.add.sprite(90, floorY + 30, 'hiro-walk', 3).setScale(5).setFlipX(false);
+
+        // === MERCHANT (behind counter, right side) ===
+        this.merchantSprite = this.add.sprite(380, floorY - 10, 'npc-merchant', 0).setScale(5);
+        if (this.anims.exists('npc-merchant-idle')) this.merchantSprite.play('npc-merchant-idle');
+        // Speech bubble
+        var bubble = this.add.graphics();
+        bubble.fillStyle(0xffffff, 0.9);
+        bubble.fillRoundedRect(330, floorY - 70, 100, 34, 8);
+        bubble.fillStyle(0xffffff, 0.9);
+        bubble.fillTriangle(370, floorY - 36, 380, floorY - 36, 375, floorY - 26);
+        this.add.text(380, floorY - 53, 'Welcome!', {
+            fontFamily: 'Nunito', fontSize: '14px', fontStyle: '800', color: '#333333'
         }).setOrigin(0.5);
 
-        // Merchant sprite (real character)
-        var merchant = this.add.sprite(w/2, 130, 'npc-merchant', 0).setScale(4);
-        if (this.anims.exists('npc-merchant-idle')) merchant.play('npc-merchant-idle');
+        // === DUST MOTES ===
+        for (var di = 0; di < 8; di++) {
+            var mote = this.add.circle(
+                Phaser.Math.Between(50, 430), Phaser.Math.Between(50, 440),
+                Phaser.Math.Between(1, 3), 0xf5c842, 0.3
+            );
+            this.tweens.add({
+                targets: mote,
+                x: mote.x + Phaser.Math.Between(-30, 30),
+                y: mote.y + Phaser.Math.Between(-20, 20),
+                alpha: { from: 0.15, to: 0.4 },
+                duration: Phaser.Math.Between(3000, 6000),
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+                delay: di * 300
+            });
+        }
 
-        // Coin counter
-        var coinBg = this.add.rectangle(w/2, 180, 200, 40, 0x16213e).setStrokeStyle(2, COLORS.gold);
-        var coinIcon = this.add.sprite(w/2 - 50, 180, 'coin-spin', 0).setScale(1.8);
+        // === COIN COUNTER (top bar) ===
+        this.add.rectangle(w/2, 22, w, 44, 0x1a1a2e, 0.85);
+        var coinIcon = this.add.sprite(w/2 - 50, 22, 'coin-spin', 0).setScale(1.8);
         coinIcon.play('coin-spin-anim');
-        this.coinDisplay = this.add.text(w/2 - 20, 180, '' + gameState.coins, {
+        this.coinDisplay = this.add.text(w/2 - 25, 22, '' + gameState.coins, {
             fontFamily: 'Nunito', fontSize: '24px', fontStyle: '900', color: '#f5c842',
             stroke: '#000000', strokeThickness: 3
         }).setOrigin(0, 0.5);
 
-        // Shop items
+        // === SHOP ITEMS ON SHELVES ===
         this.shopItems = [
-            { name: 'Health Potion', desc: 'Restore 2 hearts', cost: 35, key: 'potion' },
-            { name: 'Bamboo Shield', desc: 'Absorbs 1 wrong answer', cost: 30, key: 'shield' },
-            { name: 'Scroll Hint', desc: 'Shows hint on next problem', cost: 20, key: 'hint' },
-            { name: 'Dungeon Key', desc: 'Required to enter the dungeon', cost: 30, key: 'dungeonkey' }
+            { name: 'Health Potion', desc: 'Restore 2 hearts', cost: 35, key: 'potion', symbol: '+', color: 0xee3333, shelfIdx: 0 },
+            { name: 'Bamboo Shield', desc: 'Absorbs 1 wrong answer', cost: 30, key: 'shield', symbol: 'O', color: 0x44cccc, shelfIdx: 1 },
+            { name: 'Scroll Hint', desc: 'Shows hint on next problem', cost: 20, key: 'hint', symbol: '?', color: 0x88cc22, shelfIdx: 2 },
+            { name: 'Dungeon Key', desc: 'Required to enter dungeon', cost: 30, key: 'dungeonkey', symbol: 'K', color: 0xf5c842, shelfIdx: 3 }
         ];
 
-        this.feedbackText = this.add.text(w/2, 230, '', {
-            fontFamily: 'Nunito', fontSize: '20px', fontStyle: '700', color: '#22c55e'
-        }).setOrigin(0.5);
+        this.selectedItem = null;
+        this.shelfIcons = [];
+        this.shelfGlows = [];
 
-        var startY = 270;
-        for (var i = 0; i < this.shopItems.length; i++) {
-            this.createShopItem(this.shopItems[i], startY + i * 110);
+        for (var si2 = 0; si2 < this.shopItems.length; si2++) {
+            this.createShelfItem(this.shopItems[si2], shelfPositions[si2]);
         }
 
-        // BACK button
-        var backBtn = this.add.rectangle(w/2, h - 60, 200, 50, 0x444466)
+        // === SELECTION PANEL (bottom — hidden initially) ===
+        this.selPanel = this.add.container(0, h + 10);
+        var panelBg = this.add.rectangle(w/2, 0, w, 180, 0x16213e, 0.95).setStrokeStyle(2, COLORS.gold);
+        this.selPanel.add(panelBg);
+        this.selName = this.add.text(w/2, -60, '', {
+            fontFamily: 'Nunito', fontSize: '24px', fontStyle: '900', color: '#ffffff',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
+        this.selPanel.add(this.selName);
+        this.selDesc = this.add.text(w/2, -32, '', {
+            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '600', color: '#aabbcc'
+        }).setOrigin(0.5);
+        this.selPanel.add(this.selDesc);
+        this.selCost = this.add.text(w/2, -6, '', {
+            fontFamily: 'Nunito', fontSize: '18px', fontStyle: '700', color: '#f5c842'
+        }).setOrigin(0.5);
+        this.selPanel.add(this.selCost);
+        // BUY button
+        this.buyBtn = this.add.rectangle(w/2, 36, 140, 44, COLORS.green)
             .setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0xffffff, 0.3);
-        this.add.text(w/2, h - 60, 'BACK', {
-            fontFamily: 'Nunito', fontSize: '24px', fontStyle: '800', color: '#ffffff'
+        this.selPanel.add(this.buyBtn);
+        var buyLabel = this.add.text(w/2, 36, 'BUY', {
+            fontFamily: 'Nunito', fontSize: '22px', fontStyle: '900', color: '#ffffff'
+        }).setOrigin(0.5);
+        this.selPanel.add(buyLabel);
+        this.buyBtn.on('pointerover', function() { self.buyBtn.setScale(1.05); });
+        this.buyBtn.on('pointerout', function() { self.buyBtn.setScale(1.0); });
+        this.buyBtn.on('pointerup', function() {
+            if (self.selectedItem) self.buyItem(self.selectedItem);
+        });
+
+        // Feedback text (above panel)
+        this.feedbackText = this.add.text(w/2, h - 200, '', {
+            fontFamily: 'Nunito', fontSize: '20px', fontStyle: '700', color: '#22c55e',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(10);
+    }
+
+    createShelfItem(item, pos) {
+        var self = this;
+        // Item icon (colored rectangle + symbol)
+        var iconBg = this.add.rectangle(pos.x, pos.y, 44, 44, item.color, 0.9)
+            .setStrokeStyle(2, 0xffffff, 0.4);
+        var iconText = this.add.text(pos.x, pos.y, item.symbol, {
+            fontFamily: 'Nunito', fontSize: '26px', fontStyle: '900', color: '#ffffff',
+            stroke: '#000000', strokeThickness: 2
         }).setOrigin(0.5);
 
-        backBtn.on('pointerover', function() { backBtn.setScale(1.05); });
-        backBtn.on('pointerout', function() { backBtn.setScale(1.0); });
-        backBtn.on('pointerup', function() {
-            self.scene.start('WorldScene', { fromShop: true, playerPos: self.shopData.playerPos });
+        // Name below
+        this.add.text(pos.x, pos.y + 56, item.name, {
+            fontFamily: 'Nunito', fontSize: '13px', fontStyle: '700', color: '#dddddd',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5);
+        // Cost below name
+        this.add.text(pos.x, pos.y + 72, item.cost + ' coins', {
+            fontFamily: 'Nunito', fontSize: '11px', fontStyle: '600', color: '#f5c842',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5);
+
+        // Bobbing tween
+        this.tweens.add({
+            targets: [iconBg, iconText], y: '-=3', duration: 1200,
+            yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: item.shelfIdx * 200
+        });
+
+        // Selection glow (hidden initially)
+        var glowCirc = this.add.circle(pos.x, pos.y, 32, item.color, 0).setDepth(0);
+        this.shelfGlows.push(glowCirc);
+        this.shelfIcons.push({ bg: iconBg, text: iconText });
+
+        // Large interactive hit zone for mobile
+        var hitZone = this.add.rectangle(pos.x, pos.y + 10, 120, 100, 0x000000, 0)
+            .setInteractive({ useHandCursor: true });
+        hitZone.on('pointerup', function() {
+            self.selectItem(item);
         });
     }
 
-    createShopItem(item, y) {
-        var w = 480, self = this;
+    selectItem(item) {
+        this.selectedItem = item;
+        var w = 480, h = 854;
 
-        var bg = this.add.rectangle(w/2, y + 30, 430, 90, 0x16213e, 0.9).setStrokeStyle(2, 0x333355);
+        // Update panel text
+        this.selName.setText(item.name);
+        this.selDesc.setText(item.desc);
+        this.selCost.setText(item.cost + ' coins');
 
-        // Item name
-        this.add.text(30, y + 10, item.name, {
-            fontFamily: 'Nunito', fontSize: '22px', fontStyle: '800', color: '#ffffff'
-        });
+        // Slide panel up
+        this.tweens.add({ targets: this.selPanel, y: h - 90, duration: 250, ease: 'Back.easeOut' });
 
-        // Item description
-        this.add.text(30, y + 38, item.desc, {
-            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '600', color: '#aaaacc'
-        });
+        // Highlight selected glow, dim others
+        for (var gi = 0; gi < this.shelfGlows.length; gi++) {
+            var isSelected = gi === item.shelfIdx;
+            this.tweens.add({
+                targets: this.shelfGlows[gi],
+                alpha: isSelected ? 0.35 : 0,
+                duration: 200
+            });
+            // Bounce selected icon
+            if (isSelected) {
+                this.tweens.add({
+                    targets: [this.shelfIcons[gi].bg, this.shelfIcons[gi].text],
+                    scaleX: 1.15, scaleY: 1.15, duration: 150, yoyo: true
+                });
+            }
+        }
 
-        // Cost (top-right, clear of button)
-        this.add.text(440, y + 12, item.cost + ' coins', {
-            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '700', color: '#f5c842'
-        }).setOrigin(1, 0);
-
-        // BUY button (below cost, no overlap)
-        var buyBtn = this.add.rectangle(400, y + 50, 76, 32, COLORS.green)
-            .setInteractive({ useHandCursor: true }).setStrokeStyle(1, 0xffffff, 0.3);
-        this.add.text(400, y + 50, 'BUY', {
-            fontFamily: 'Nunito', fontSize: '16px', fontStyle: '800', color: '#ffffff'
-        }).setOrigin(0.5);
-
-        buyBtn.on('pointerover', function() { buyBtn.setScale(1.08); });
-        buyBtn.on('pointerout', function() { buyBtn.setScale(1.0); });
-        buyBtn.on('pointerup', function() {
-            self.buyItem(item);
-        });
+        // Hiro head-bob
+        try { this.sound.play('sfx-coin', { volume: 0.3 }); } catch(e) {}
     }
 
     buyItem(item) {
         if (gameState.coins < item.cost) {
             this.feedbackText.setText('Not enough coins!').setColor('#ef4444');
+            this.tweens.add({ targets: this.feedbackText, scaleX: 1.2, scaleY: 1.2, duration: 150, yoyo: true });
             return;
         }
 
-        // Check if item is already owned (for shield/hint)
         if (item.key === 'shield' && gameState.hasShield) {
             this.feedbackText.setText('You already have a shield!').setColor('#ef4444');
             return;
@@ -6364,6 +6751,15 @@ class ShopScene extends Phaser.Scene {
 
         // Bounce feedback
         this.tweens.add({ targets: this.feedbackText, scaleX: 1.2, scaleY: 1.2, duration: 150, yoyo: true });
+
+        // Merchant bounce reaction
+        if (this.merchantSprite) {
+            this.tweens.add({
+                targets: this.merchantSprite,
+                scaleX: 5.3, scaleY: 5.3, duration: 150, yoyo: true,
+                onComplete: function() {}
+            });
+        }
     }
 }
 
