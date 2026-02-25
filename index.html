@@ -6937,7 +6937,7 @@ class UIScene extends Phaser.Scene {
     constructor() { super({ key: 'UIScene' }); }
 
     create() {
-        var w = this.scale.width;
+        var w = this.scale.width, h = this.scale.height;
         this.add.rectangle(w/2, 0, w, 50, 0x000000, 0.55).setOrigin(0.5, 0).setDepth(50);
 
         // Hearts
