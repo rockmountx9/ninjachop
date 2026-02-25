@@ -271,7 +271,7 @@ var LAND_CONFIGS = {
             { name: 'Blue Bat', hp: 2, maxHp: 2, sprite: 'bluebat', anim: 'bluebat-idle', scale: 5, coins: 5 },
             { name: 'Axolotl', hp: 3, maxHp: 3, sprite: 'axolot', anim: 'axolot-idle', scale: 5, coins: 8 }
         ],
-        bossData: { name: 'River Serpent', hp: 8, maxHp: 8, sprite: 'boss-serpent', anim: 'boss-serpent-idle', scale: 8, isBoss: true, coins: 25 }
+        bossData: { name: 'River Serpent', hp: 8, maxHp: 8, sprite: 'boss-serpent', anim: 'boss-serpent-idle', scale: 2, isBoss: true, coins: 25 }
     },
     3: {
         name: 'Bamboo Forest', musicKey: 'music-bamboo', dungeonToll: 60,
@@ -617,7 +617,7 @@ class BootScene extends Phaser.Scene {
         this.load.spritesheet('kappa', ASSET_BASE + 'Actor/Monsters/KappaGreen/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('axolot', ASSET_BASE + 'Actor/Monsters/Axolot/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet('boss-frog', ASSET_BASE + 'Actor/Boss/GiantFrog/Idle40x40.png', { frameWidth: 40, frameHeight: 40 });
-        this.load.spritesheet('boss-serpent', ASSET_BASE + 'Actor/Monsters/Snake2/Snake2.png', { frameWidth: 16, frameHeight: 16 });
+        // boss-serpent: generated procedurally in create() — no asset load needed
 
         // Land 3 monsters
         this.load.spritesheet('bamboo', ASSET_BASE + 'Actor/Monsters/Bamboo/SpriteSheet.png', { frameWidth: 16, frameHeight: 16 });
@@ -746,13 +746,13 @@ class BootScene extends Phaser.Scene {
         this.anims.create({ key: 'claw-double-anim', frames: this.anims.generateFrameNumbers('fx-claw-double', { start: 0, end: 3 }), frameRate: 20, repeat: 0 });
         this.anims.create({ key: 'coin-spin-anim', frames: this.anims.generateFrameNumbers('coin-spin', { start: 0, end: 5 }), frameRate: 8, repeat: -1 });
 
-        // Monster idle animations (first row = down-facing cycle)
+        // Monster idle animations — use frames 0,1 at slow rate to prevent spinning look
         var monsters = ['slime', 'butterfly', 'mollusc', 'snake', 'fish', 'bluebat', 'kappa', 'axolot',
             'bamboo', 'panda', 'bambooyellow', 'owl', 'skull', 'skullblue', 'spirit', 'cyclope',
             'spirit2', 'eye', 'dragon', 'reptile'];
         for (var mi = 0; mi < monsters.length; mi++) {
             if (!failedAssets.has(monsters[mi])) {
-                this.anims.create({ key: monsters[mi] + '-idle', frames: this.anims.generateFrameNumbers(monsters[mi], { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+                this.anims.create({ key: monsters[mi] + '-idle', frames: this.anims.generateFrameNumbers(monsters[mi], { start: 0, end: 1 }), frameRate: 2, repeat: -1 });
             }
         }
 
@@ -785,9 +785,9 @@ class BootScene extends Phaser.Scene {
         if (!failedAssets.has('boss-frog') || true) {
             this.anims.create({ key: 'boss-frog-idle', frames: this.anims.generateFrameNumbers('boss-frog', { start: 0, end: 4 }), frameRate: 4, repeat: -1 });
         }
-        // Boss serpent (Snake2 monster sprite used as boss)
-        this.makeFallback('boss-serpent', 64, 64, 0x2288aa, 16, 16);
-        this.anims.create({ key: 'boss-serpent-idle', frames: this.anims.generateFrameNumbers('boss-serpent', { start: 0, end: 3 }), frameRate: 4, repeat: -1 });
+        // Boss serpent — procedurally generated water serpent (80x80, 6 frames)
+        this.generateSerpentBoss();
+        this.anims.create({ key: 'boss-serpent-idle', frames: this.anims.generateFrameNumbers('boss-serpent', { start: 0, end: 5 }), frameRate: 5, repeat: -1 });
 
         // Boss bamboo oni (GiantBamboo: 62x62, 6 frames)
         if (failedAssets.has('boss-bamboo')) {
@@ -837,6 +837,156 @@ class BootScene extends Phaser.Scene {
             for (var col = 0; col < cols; col++)
                 t.add(row * cols + col, 0, col * fw, row * (h > fw ? fw : h), fw, h > fw ? fw : h);
         g.destroy();
+    }
+
+    generateSerpentBoss() {
+        var fw = 80, fh = 80, nf = 6;
+        var can = this.textures.createCanvas('boss-serpent', fw * nf, fh);
+        var ctx = can.context;
+
+        for (var f = 0; f < nf; f++) {
+            var ox = f * fw;
+            var phase = (f / nf) * Math.PI * 2;
+
+            // Water splash behind body
+            ctx.fillStyle = 'rgba(40,140,200,0.15)';
+            for (var sw = 0; sw < 8; sw++) {
+                var swx = 15 + sw * 7 + Math.sin(phase + sw * 0.9) * 4;
+                var swy = 58 + Math.cos(phase + sw * 1.2) * 5;
+                ctx.beginPath(); ctx.arc(ox + swx, swy, 3 + Math.sin(phase + sw) * 1.5, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Body path: S-curve, thick in middle, tapers at tail
+            var bodyPts = [];
+            for (var i = 0; i <= 24; i++) {
+                var t = i / 24;
+                var bx = 8 + t * 52;
+                var by = 38 + Math.sin(t * Math.PI * 3 + phase) * 12;
+                var r = (t < 0.15) ? t * 60 : (t > 0.85) ? (1 - t) * 53 : 9 - Math.abs(t - 0.5) * 4;
+                bodyPts.push({ x: bx, y: by, r: Math.max(r, 1.5) });
+            }
+
+            // Body shadow
+            for (var i = 0; i < bodyPts.length; i++) {
+                var p = bodyPts[i];
+                ctx.fillStyle = 'rgba(0,30,30,0.25)';
+                ctx.beginPath(); ctx.arc(ox + p.x, p.y + 3, p.r + 1.5, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Body segments — gradient from dark teal back to lighter belly
+            for (var i = 0; i < bodyPts.length; i++) {
+                var p = bodyPts[i];
+                // Back (upper half)
+                ctx.fillStyle = '#0e5a5a';
+                ctx.beginPath(); ctx.arc(ox + p.x, p.y, p.r, Math.PI, 0); ctx.fill();
+                // Belly (lower half)
+                ctx.fillStyle = '#3aaa88';
+                ctx.beginPath(); ctx.arc(ox + p.x, p.y, p.r, 0, Math.PI); ctx.fill();
+                // Scale highlights on back
+                if (i % 3 === 0 && p.r > 4) {
+                    ctx.fillStyle = '#1a7a6a';
+                    ctx.beginPath(); ctx.arc(ox + p.x, p.y - p.r * 0.5, 2, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+
+            // Dorsal fin ridge
+            for (var i = 4; i < bodyPts.length - 4; i += 2) {
+                var p = bodyPts[i];
+                if (p.r > 5) {
+                    ctx.fillStyle = '#0a4848';
+                    ctx.beginPath();
+                    ctx.moveTo(ox + p.x - 2, p.y - p.r + 1);
+                    ctx.lineTo(ox + p.x, p.y - p.r - 4);
+                    ctx.lineTo(ox + p.x + 2, p.y - p.r + 1);
+                    ctx.closePath(); ctx.fill();
+                }
+            }
+
+            // === HEAD (right side, larger) ===
+            var hx = 64, hy = 38 + Math.sin(Math.PI * 3 + phase) * 12;
+
+            // Neck glow (water energy)
+            ctx.fillStyle = 'rgba(40,180,160,0.12)';
+            ctx.beginPath(); ctx.arc(ox + hx - 4, hy, 16, 0, Math.PI * 2); ctx.fill();
+
+            // Head base
+            ctx.fillStyle = '#0c6060';
+            ctx.beginPath(); ctx.ellipse(ox + hx, hy, 13, 10, -0.15, 0, Math.PI * 2); ctx.fill();
+
+            // Jaw (slightly lighter)
+            ctx.fillStyle = '#2a9a80';
+            ctx.beginPath(); ctx.ellipse(ox + hx + 2, hy + 4, 10, 5, -0.1, 0, Math.PI); ctx.fill();
+
+            // Crown/crest — 3 spiky fins
+            ctx.fillStyle = '#084848';
+            var crests = [[-5, -12], [0, -15], [5, -13]];
+            for (var ci = 0; ci < crests.length; ci++) {
+                ctx.beginPath();
+                ctx.moveTo(ox + hx + crests[ci][0] - 3, hy - 8);
+                ctx.lineTo(ox + hx + crests[ci][0], hy + crests[ci][1]);
+                ctx.lineTo(ox + hx + crests[ci][0] + 3, hy - 8);
+                ctx.closePath(); ctx.fill();
+            }
+
+            // Eye glow (outer)
+            ctx.fillStyle = 'rgba(255,220,0,0.25)';
+            ctx.beginPath(); ctx.arc(ox + hx + 5, hy - 3, 6, 0, Math.PI * 2); ctx.fill();
+
+            // Eye (bright yellow-orange)
+            var eyeGrad = ctx.createRadialGradient(ox + hx + 5, hy - 3, 0, ox + hx + 5, hy - 3, 3.5);
+            eyeGrad.addColorStop(0, '#ffe040');
+            eyeGrad.addColorStop(1, '#ff8800');
+            ctx.fillStyle = eyeGrad;
+            ctx.beginPath(); ctx.arc(ox + hx + 5, hy - 3, 3.5, 0, Math.PI * 2); ctx.fill();
+
+            // Slit pupil
+            ctx.fillStyle = '#1a0000';
+            ctx.beginPath(); ctx.ellipse(ox + hx + 5, hy - 3, 1, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Mouth line
+            ctx.strokeStyle = '#063030';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(ox + hx + 6, hy + 4);
+            ctx.quadraticCurveTo(ox + hx + 14, hy + 2, ox + hx + 13, hy + 5);
+            ctx.stroke();
+
+            // Fangs
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(ox + hx + 10, hy + 4); ctx.lineTo(ox + hx + 9, hy + 10); ctx.lineTo(ox + hx + 12, hy + 5);
+            ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(ox + hx + 7, hy + 5); ctx.lineTo(ox + hx + 6, hy + 9); ctx.lineTo(ox + hx + 9, hy + 5);
+            ctx.closePath(); ctx.fill();
+
+            // Water droplets around body
+            ctx.fillStyle = 'rgba(120,220,255,0.5)';
+            for (var w = 0; w < 6; w++) {
+                var wx = 12 + Math.sin(phase + w * 1.4) * 28 + w * 8;
+                var wy = 62 + Math.cos(phase + w * 1.8) * 4;
+                ctx.beginPath(); ctx.arc(ox + wx, wy, 1.2 + Math.sin(phase + w) * 0.5, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // Tail tip flourish
+            var tp = bodyPts[0];
+            ctx.fillStyle = '#0a5050';
+            ctx.beginPath();
+            ctx.moveTo(ox + tp.x, tp.y - 4);
+            ctx.lineTo(ox + tp.x - 6, tp.y - 8);
+            ctx.lineTo(ox + tp.x - 2, tp.y);
+            ctx.lineTo(ox + tp.x - 7, tp.y + 5);
+            ctx.lineTo(ox + tp.x, tp.y + 3);
+            ctx.closePath(); ctx.fill();
+        }
+
+        can.refresh();
+
+        // Register frames
+        var tex = this.textures.get('boss-serpent');
+        for (var fi = 0; fi < nf; fi++) {
+            tex.add(fi, 0, fi * fw, 0, fw, fh);
+        }
     }
 }
 
@@ -5635,97 +5785,134 @@ class CombatScene extends Phaser.Scene {
                 self.cameras.main.shake(500, 0.03);
 
                 self.time.delayedCall(1000, function() {
-                    var kx = w/2, ky = h/2 - 80;
+                    var kx = w/2, ky = h/2 - 60;
 
-                    // === KAGE — MUCH BIGGER SILHOUETTE ===
-                    // Dark mist background
-                    var kageMist = self.add.circle(kx, ky + 10, 130, 0x220000, 0.12).setDepth(55);
-                    self.combatContainer.add(kageMist);
-                    self.tweens.add({ targets: kageMist, scaleX: 1.3, scaleY: 1.3, alpha: 0.04, duration: 2500, yoyo: true, repeat: -1 });
+                    // === KAGE — MASSIVE DRAMATIC ENTRANCE ===
 
-                    // Cloak body (LARGE)
-                    var kCloak = self.add.rectangle(kx, ky + 30, 100, 100, 0x080808).setDepth(60).setAlpha(0);
+                    // Ground rumble before he appears
+                    self.cameras.main.shake(800, 0.02);
+
+                    // Blood-red mist fills the screen from edges
+                    var mistL = self.add.rectangle(0, h/2, w * 0.5, h, 0x1a0000, 0).setOrigin(0, 0.5).setDepth(54);
+                    var mistR = self.add.rectangle(w, h/2, w * 0.5, h, 0x1a0000, 0).setOrigin(1, 0.5).setDepth(54);
+                    self.combatContainer.add(mistL); self.combatContainer.add(mistR);
+                    self.tweens.add({ targets: [mistL, mistR], alpha: 0.3, duration: 800 });
+
+                    // Massive pulsing dark aura behind Kage
+                    var aura1 = self.add.circle(kx, ky + 10, 160, 0x220000, 0).setDepth(55);
+                    var aura2 = self.add.circle(kx, ky + 10, 120, 0x330000, 0).setDepth(55);
+                    self.combatContainer.add(aura1); self.combatContainer.add(aura2);
+                    self.tweens.add({ targets: aura1, alpha: 0.15, duration: 600 });
+                    self.tweens.add({ targets: aura2, alpha: 0.2, duration: 600, delay: 100 });
+                    self.tweens.add({ targets: aura1, scaleX: 1.4, scaleY: 1.4, alpha: 0.05, duration: 2000, yoyo: true, repeat: -1, delay: 600 });
+                    self.tweens.add({ targets: aura2, scaleX: 1.3, scaleY: 1.3, alpha: 0.08, duration: 1800, yoyo: true, repeat: -1, delay: 800 });
+
+                    // Red energy ring that pulses outward
+                    var ring = self.add.circle(kx, ky, 10, 0x000000, 0).setStrokeStyle(3, 0xff0000, 0.6).setDepth(56);
+                    self.combatContainer.add(ring);
+                    self.tweens.add({ targets: ring, scaleX: 15, scaleY: 15, alpha: 0, duration: 1200, ease: 'Quad.easeOut' });
+
+                    // Kage materializes from NOTHING — starts as a point and expands
+                    // Cloak body — MASSIVE
+                    var kCloak = self.add.rectangle(kx, ky + 35, 120, 120, 0x060606).setDepth(60).setScale(0).setAlpha(0);
                     self.combatContainer.add(kCloak);
-                    self.tweens.add({ targets: kCloak, alpha: 1, duration: 500 });
+                    self.tweens.add({ targets: kCloak, alpha: 1, scaleX: 1, scaleY: 1, duration: 600, ease: 'Back.easeOut' });
 
-                    // Broad shoulders
-                    var kShoulderL = self.add.triangle(kx - 48, ky - 5, 0, 35, 45, 0, 45, 35, 0x0a0a0a).setDepth(61).setAlpha(0);
-                    var kShoulderR = self.add.triangle(kx + 48, ky - 5, 0, 0, 45, 35, 0, 35, 0x0a0a0a).setDepth(61).setAlpha(0);
-                    self.combatContainer.add(kShoulderL);
-                    self.combatContainer.add(kShoulderR);
-                    self.tweens.add({ targets: [kShoulderL, kShoulderR], alpha: 1, duration: 500 });
+                    // Broad shoulders with sharp edges
+                    var kShoulderL = self.add.triangle(kx - 58, ky - 8, 0, 45, 55, 0, 55, 45, 0x0a0a0a).setDepth(61).setScale(0).setAlpha(0);
+                    var kShoulderR = self.add.triangle(kx + 58, ky - 8, 0, 0, 55, 45, 0, 45, 0x0a0a0a).setDepth(61).setScale(0).setAlpha(0);
+                    self.combatContainer.add(kShoulderL); self.combatContainer.add(kShoulderR);
+                    self.tweens.add({ targets: [kShoulderL, kShoulderR], alpha: 1, scaleX: 1, scaleY: 1, duration: 500, delay: 100, ease: 'Back.easeOut' });
 
-                    // Head (LARGER)
-                    var kHead = self.add.circle(kx, ky - 38, 30, 0x0c0c0c).setDepth(62).setAlpha(0);
+                    // Head — LARGER
+                    var kHead = self.add.circle(kx, ky - 42, 36, 0x0c0c0c).setDepth(62).setScale(0).setAlpha(0);
                     self.combatContainer.add(kHead);
-                    self.tweens.add({ targets: kHead, alpha: 1, duration: 400, delay: 150 });
+                    self.tweens.add({ targets: kHead, alpha: 1, scaleX: 1, scaleY: 1, duration: 400, delay: 200, ease: 'Back.easeOut' });
 
-                    // Horns (LARGER, more prominent)
-                    var kHornL = self.add.triangle(kx - 28, ky - 70, 0, 35, 14, 0, 28, 35, 0x0a0a0a).setDepth(63).setAlpha(0);
-                    var kHornR = self.add.triangle(kx + 28, ky - 70, 0, 35, 14, 0, 28, 35, 0x0a0a0a).setDepth(63).setAlpha(0);
-                    self.combatContainer.add(kHornL);
-                    self.combatContainer.add(kHornR);
-                    self.tweens.add({ targets: [kHornL, kHornR], alpha: 1, duration: 400, delay: 250 });
+                    // Horns — MASSIVE, menacing
+                    var kHornL = self.add.triangle(kx - 32, ky - 82, 0, 42, 16, 0, 32, 42, 0x0a0a0a).setDepth(63).setAlpha(0);
+                    var kHornR = self.add.triangle(kx + 32, ky - 82, 0, 42, 16, 0, 32, 42, 0x0a0a0a).setDepth(63).setAlpha(0);
+                    self.combatContainer.add(kHornL); self.combatContainer.add(kHornR);
+                    self.tweens.add({ targets: [kHornL, kHornR], alpha: 1, duration: 300, delay: 350 });
 
-                    // Red eyes — MUCH bigger and brighter
-                    self.time.delayedCall(500, function() {
-                        var kEyeGlowL = self.add.circle(kx - 14, ky - 42, 20, 0xff0000, 0).setDepth(64);
-                        var kEyeGlowR = self.add.circle(kx + 14, ky - 42, 20, 0xff0000, 0).setDepth(64);
-                        self.combatContainer.add(kEyeGlowL);
-                        self.combatContainer.add(kEyeGlowR);
-                        self.tweens.add({ targets: [kEyeGlowL, kEyeGlowR], alpha: 0.2, duration: 250 });
-                        self.tweens.add({ targets: [kEyeGlowL, kEyeGlowR], alpha: 0.06, scaleX: 1.6, scaleY: 1.6, duration: 1000, yoyo: true, repeat: -1, delay: 400 });
+                    // Glowing red outline around entire silhouette
+                    var outline = self.add.circle(kx, ky, 90, 0x000000, 0).setStrokeStyle(2, 0xff0000, 0).setDepth(59);
+                    self.combatContainer.add(outline);
+                    self.tweens.add({ targets: outline, alpha: 1, duration: 500, delay: 400, onUpdate: function() {
+                        outline.setStrokeStyle(2, 0xff0000, outline.alpha * 0.3);
+                    }});
+                    self.tweens.add({ targets: outline, scaleX: 1.05, scaleY: 1.05, duration: 1500, yoyo: true, repeat: -1, delay: 900 });
 
-                        var kEyeL = self.add.rectangle(kx - 14, ky - 42, 16, 9, 0xff0000).setDepth(65).setAlpha(0);
-                        var kEyeR = self.add.rectangle(kx + 14, ky - 42, 16, 9, 0xff0000).setDepth(65).setAlpha(0);
-                        self.combatContainer.add(kEyeL);
-                        self.combatContainer.add(kEyeR);
-                        self.tweens.add({ targets: [kEyeL, kEyeR], alpha: 1, duration: 200 });
-                        self.tweens.add({ targets: [kEyeL, kEyeR], alpha: 0.5, duration: 1000, yoyo: true, repeat: -1, delay: 300 });
+                    // Red eyes — DRAMATIC SNAP OPEN with flash
+                    self.time.delayedCall(600, function() {
+                        // Build tension — eye slits (closed)
+                        var kEyeSlitL = self.add.rectangle(kx - 16, ky - 46, 18, 1, 0xff0000, 0).setDepth(65);
+                        var kEyeSlitR = self.add.rectangle(kx + 16, ky - 46, 18, 1, 0xff0000, 0).setDepth(65);
+                        self.combatContainer.add(kEyeSlitL); self.combatContainer.add(kEyeSlitR);
 
-                        var kPupilL = self.add.circle(kx - 14, ky - 42, 3.5, 0xffffff, 0).setDepth(66);
-                        var kPupilR = self.add.circle(kx + 14, ky - 42, 3.5, 0xffffff, 0).setDepth(66);
-                        self.combatContainer.add(kPupilL);
-                        self.combatContainer.add(kPupilR);
-                        self.tweens.add({ targets: [kPupilL, kPupilR], alpha: 0.85, duration: 150, delay: 150 });
+                        // SNAP open — height goes from 1 to 12
+                        self.tweens.add({ targets: [kEyeSlitL, kEyeSlitR], alpha: 1, displayHeight: 12, duration: 120, delay: 200, ease: 'Quad.easeOut',
+                            onComplete: function() {
+                                // FLASH — entire screen goes red for a split second
+                                self.cameras.main.flash(150, 255, 30, 30, true);
+                                self.cameras.main.shake(200, 0.025);
+                            }
+                        });
 
-                        // Red lightning flash when eyes open
-                        self.cameras.main.flash(80, 255, 50, 50, true);
+                        // Massive eye glow
+                        var kEyeGlowL = self.add.circle(kx - 16, ky - 46, 28, 0xff0000, 0).setDepth(64);
+                        var kEyeGlowR = self.add.circle(kx + 16, ky - 46, 28, 0xff0000, 0).setDepth(64);
+                        self.combatContainer.add(kEyeGlowL); self.combatContainer.add(kEyeGlowR);
+                        self.tweens.add({ targets: [kEyeGlowL, kEyeGlowR], alpha: 0.25, duration: 300, delay: 200 });
+                        self.tweens.add({ targets: [kEyeGlowL, kEyeGlowR], alpha: 0.08, scaleX: 1.8, scaleY: 1.8, duration: 1200, yoyo: true, repeat: -1, delay: 600 });
+
+                        // Bright eye cores with pulsing
+                        self.tweens.add({ targets: [kEyeSlitL, kEyeSlitR], alpha: 0.6, duration: 800, yoyo: true, repeat: -1, delay: 500 });
+
+                        // White hot pupil centers
+                        var kPupilL = self.add.circle(kx - 16, ky - 46, 4, 0xffffff, 0).setDepth(66);
+                        var kPupilR = self.add.circle(kx + 16, ky - 46, 4, 0xffffff, 0).setDepth(66);
+                        self.combatContainer.add(kPupilL); self.combatContainer.add(kPupilR);
+                        self.tweens.add({ targets: [kPupilL, kPupilR], alpha: 0.9, duration: 100, delay: 350 });
+                        self.tweens.add({ targets: [kPupilL, kPupilR], alpha: 0.4, duration: 800, yoyo: true, repeat: -1, delay: 500 });
                     });
 
-                    // Dark swirling particles (more of them)
-                    for (var k = 0; k < 16; k++) {
-                        var kpAngle = (k / 16) * Math.PI * 2;
-                        var kpR = Phaser.Math.Between(50, 100);
+                    // 24 dark swirling particles — orbit Kage
+                    for (var k = 0; k < 24; k++) {
+                        var kpAngle = (k / 24) * Math.PI * 2;
+                        var kpR = Phaser.Math.Between(55, 120);
                         var kp = self.add.circle(
                             kx + Math.cos(kpAngle) * kpR,
                             ky + Math.sin(kpAngle) * kpR,
-                            Phaser.Math.Between(1, 4), 0x660000, 0.5
+                            Phaser.Math.Between(1, 5), k % 3 === 0 ? 0x880000 : 0x440000, 0.6
                         ).setDepth(59);
                         self.combatContainer.add(kp);
                         self.tweens.add({
                             targets: kp,
-                            x: kx + Math.cos(kpAngle + 1.2) * (kpR - 15),
-                            y: ky + Math.sin(kpAngle + 1.2) * (kpR - 15),
-                            alpha: 0, duration: 3000, repeat: -1, delay: k * 80
+                            x: kx + Math.cos(kpAngle + 1.5) * (kpR - 20),
+                            y: ky + Math.sin(kpAngle + 1.5) * (kpR - 20),
+                            alpha: 0, duration: 2500, repeat: -1, delay: k * 60
                         });
                     }
 
-                    // Red fog from edges
-                    for (var rf = 0; rf < 6; rf++) {
-                        var fog = self.add.ellipse(w/2 + Phaser.Math.Between(-100, 100), h/2 + 80 + rf * 15, 180, 30, 0x330000, 0.08).setDepth(55);
+                    // Red fog from bottom — 8 layers
+                    for (var rf = 0; rf < 8; rf++) {
+                        var fog = self.add.ellipse(w/2 + Phaser.Math.Between(-120, 120), h/2 + 60 + rf * 18, 200, 35, 0x330000, 0).setDepth(55);
                         self.combatContainer.add(fog);
-                        self.tweens.add({ targets: fog, x: fog.x + Phaser.Math.Between(-30, 30), alpha: 0.02, duration: 2500, yoyo: true, repeat: -1, delay: rf * 200 });
+                        self.tweens.add({ targets: fog, alpha: 0.1, duration: 600, delay: rf * 100 });
+                        self.tweens.add({ targets: fog, x: fog.x + Phaser.Math.Between(-40, 40), alpha: 0.02, duration: 2500, yoyo: true, repeat: -1, delay: 600 + rf * 200 });
                     }
 
-                    // "KAGE" label (BIGGER, above head)
-                    self.time.delayedCall(700, function() {
-                        var kageLabel = self.add.text(kx, ky - 105, 'KAGE', {
-                            fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#ff2222',
-                            stroke: '#000000', strokeThickness: 5
-                        }).setOrigin(0.5).setDepth(67).setAlpha(0);
+                    // "KAGE" label — HUGE, blood red, scales in
+                    self.time.delayedCall(900, function() {
+                        var kageLabel = self.add.text(kx, ky - 125, 'KAGE', {
+                            fontFamily: 'Nunito', fontSize: '48px', fontStyle: '900', color: '#ff1111',
+                            stroke: '#000000', strokeThickness: 6
+                        }).setOrigin(0.5).setDepth(67).setScale(0.3).setAlpha(0);
                         self.combatContainer.add(kageLabel);
-                        self.tweens.add({ targets: kageLabel, alpha: 1, duration: 400 });
+                        self.tweens.add({ targets: kageLabel, alpha: 1, scaleX: 1, scaleY: 1, duration: 400, ease: 'Back.easeOut' });
+                        // Pulsing glow on name
+                        self.tweens.add({ targets: kageLabel, alpha: 0.7, duration: 1200, yoyo: true, repeat: -1, delay: 600 });
 
                         // Taunt text (bigger, more readable)
                         var tauntText = self.add.text(w/2, h/2 + 65, '', {
