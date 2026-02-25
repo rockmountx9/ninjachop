@@ -2370,7 +2370,6 @@ class WorldScene extends Phaser.Scene {
 
     createTouchControls() {
         var self = this;
-        var cam = this.cameras.main;
 
         // Touch control container — fixed to camera (re-positions in update)
         this.touchContainer = this.add.container(0, 0).setDepth(300).setAlpha(0.5);
@@ -2380,72 +2379,68 @@ class WorldScene extends Phaser.Scene {
         this.input.on('pointerdown', function() {
             if (!self.touchControlsVisible) {
                 self.touchControlsVisible = true;
-                self.touchContainer.setAlpha(0.55);
+                self.touchContainer.setAlpha(0.6);
             }
         });
 
         // D-pad layout (bottom-left) — relative positions, repositioned each frame
-        var dpadCX = 90, dpadCY = Math.min(760, this.scale.height - 94), btnSize = 52, gap = 4;
+        var dpadCX = 100, dpadCY = Math.min(760, this.scale.height - 110), bs = 64, gap = 4;
 
         // D-pad background circle
-        var dpadBg = this.add.circle(0, 0, 78, 0x000000, 0.3).setStrokeStyle(2, 0xffffff, 0.15);
+        var dpadBg = this.add.circle(0, 0, 100, 0x000000, 0.35).setStrokeStyle(2, 0xffffff, 0.1);
         this.touchContainer.add(dpadBg);
 
-        // UP
-        var btnUp = this.add.rectangle(0, -btnSize - gap, btnSize, btnSize, 0x333355, 0.7)
-            .setStrokeStyle(2, 0xffffff, 0.3).setInteractive();
-        this.touchContainer.add(btnUp);
-        var arrowUp = this.add.triangle(0, -btnSize - gap, 0, -14, 12, 6, -12, 6, 0xffffff, 0.6);
-        this.touchContainer.add(arrowUp);
-        btnUp.on('pointerdown', function() { self.touchDir.up = true; });
-        btnUp.on('pointerup', function() { self.touchDir.up = false; });
-        btnUp.on('pointerout', function() { self.touchDir.up = false; });
+        // Helper: draw arrow graphic (triangle pointing direction)
+        function makeArrow(g, dir) {
+            g.fillStyle(0xffffff, 0.85);
+            var s = 14;
+            if (dir === 'up') g.fillTriangle(0, -s, s, s * 0.6, -s, s * 0.6);
+            else if (dir === 'down') g.fillTriangle(0, s, s, -s * 0.6, -s, -s * 0.6);
+            else if (dir === 'left') g.fillTriangle(-s, 0, s * 0.6, -s, s * 0.6, s);
+            else if (dir === 'right') g.fillTriangle(s, 0, -s * 0.6, -s, -s * 0.6, s);
+        }
 
-        // DOWN
-        var btnDown = this.add.rectangle(0, btnSize + gap, btnSize, btnSize, 0x333355, 0.7)
-            .setStrokeStyle(2, 0xffffff, 0.3).setInteractive();
-        this.touchContainer.add(btnDown);
-        var arrowDown = this.add.triangle(0, btnSize + gap, 0, -6, 12, 14, -12, 14, 0xffffff, 0.6).setAngle(180);
-        this.touchContainer.add(arrowDown);
-        btnDown.on('pointerdown', function() { self.touchDir.down = true; });
-        btnDown.on('pointerup', function() { self.touchDir.down = false; });
-        btnDown.on('pointerout', function() { self.touchDir.down = false; });
+        // Helper: create d-pad button
+        function makeDpadBtn(cx, cy, dir, key) {
+            var btn = self.add.graphics();
+            btn.fillStyle(0x2a2a4a, 0.8);
+            btn.fillRoundedRect(cx - bs/2, cy - bs/2, bs, bs, 12);
+            btn.lineStyle(2, 0x6666aa, 0.4);
+            btn.strokeRoundedRect(cx - bs/2, cy - bs/2, bs, bs, 12);
+            self.touchContainer.add(btn);
+            var arrow = self.add.graphics();
+            arrow.setPosition(cx, cy);
+            makeArrow(arrow, dir);
+            self.touchContainer.add(arrow);
+            // Invisible hit area on top
+            var hit = self.add.rectangle(cx, cy, bs, bs, 0xffffff, 0).setInteractive();
+            self.touchContainer.add(hit);
+            hit.on('pointerdown', function() { self.touchDir[key] = true; btn.clear(); btn.fillStyle(0x4a4a7a, 0.9); btn.fillRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); btn.lineStyle(2,0x8888cc,0.6); btn.strokeRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); });
+            hit.on('pointerup', function() { self.touchDir[key] = false; btn.clear(); btn.fillStyle(0x2a2a4a,0.8); btn.fillRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); btn.lineStyle(2,0x6666aa,0.4); btn.strokeRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); });
+            hit.on('pointerout', function() { self.touchDir[key] = false; btn.clear(); btn.fillStyle(0x2a2a4a,0.8); btn.fillRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); btn.lineStyle(2,0x6666aa,0.4); btn.strokeRoundedRect(cx-bs/2,cy-bs/2,bs,bs,12); });
+        }
 
-        // LEFT
-        var btnLeft = this.add.rectangle(-btnSize - gap, 0, btnSize, btnSize, 0x333355, 0.7)
-            .setStrokeStyle(2, 0xffffff, 0.3).setInteractive();
-        this.touchContainer.add(btnLeft);
-        var arrowLeft = this.add.triangle(-btnSize - gap, 0, 14, -12, 14, 12, -6, 0, 0xffffff, 0.6);
-        this.touchContainer.add(arrowLeft);
-        btnLeft.on('pointerdown', function() { self.touchDir.left = true; });
-        btnLeft.on('pointerup', function() { self.touchDir.left = false; });
-        btnLeft.on('pointerout', function() { self.touchDir.left = false; });
-
-        // RIGHT
-        var btnRight = this.add.rectangle(btnSize + gap, 0, btnSize, btnSize, 0x333355, 0.7)
-            .setStrokeStyle(2, 0xffffff, 0.3).setInteractive();
-        this.touchContainer.add(btnRight);
-        var arrowRight = this.add.triangle(btnSize + gap, 0, -6, -12, 14, 0, -6, 12, 0xffffff, 0.6);
-        this.touchContainer.add(arrowRight);
-        btnRight.on('pointerdown', function() { self.touchDir.right = true; });
-        btnRight.on('pointerup', function() { self.touchDir.right = false; });
-        btnRight.on('pointerout', function() { self.touchDir.right = false; });
+        makeDpadBtn(0, -bs - gap, 'up', 'up');
+        makeDpadBtn(0, bs + gap, 'down', 'down');
+        makeDpadBtn(-bs - gap, 0, 'left', 'left');
+        makeDpadBtn(bs + gap, 0, 'right', 'right');
 
         // ACTION BUTTON (bottom-right) — chop/talk
-        var actionX = this.scale.width - 90, actionY = Math.min(760, this.scale.height - 94);
-        var actionBg = this.add.circle(actionX - dpadCX, actionY - dpadCY, 40, 0xe94560, 0.6)
+        var actionX = this.scale.width - 100, actionY = Math.min(760, this.scale.height - 110);
+        var actR = 48;
+        var actionBg = this.add.circle(actionX - dpadCX, actionY - dpadCY, actR, 0xe94560, 0.7)
             .setStrokeStyle(3, 0xffffff, 0.4).setInteractive();
         this.touchContainer.add(actionBg);
         var actionLabel = this.add.text(actionX - dpadCX, actionY - dpadCY, '\u2694', {
-            fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#ffffff'
+            fontFamily: 'Nunito', fontSize: '38px', fontStyle: '900', color: '#ffffff'
         }).setOrigin(0.5);
         this.touchContainer.add(actionLabel);
         actionBg.on('pointerdown', function() {
-            actionBg.setFillStyle(0xff6680, 0.8);
+            actionBg.setFillStyle(0xff6680, 0.9);
             self.doAction();
         });
-        actionBg.on('pointerup', function() { actionBg.setFillStyle(0xe94560, 0.6); });
-        actionBg.on('pointerout', function() { actionBg.setFillStyle(0xe94560, 0.6); });
+        actionBg.on('pointerup', function() { actionBg.setFillStyle(0xe94560, 0.7); });
+        actionBg.on('pointerout', function() { actionBg.setFillStyle(0xe94560, 0.7); });
 
         // Store reference positions for camera-following
         this.dpadCX = dpadCX;
@@ -6934,27 +6929,47 @@ class ShopScene extends Phaser.Scene {
 
     createShopTouchControls() {
         var h = this.scale.height, w = this.scale.width, self = this;
-        var dSize = 44, dPad = 10, baseX = 60, baseY = h - 90;
+        var bs = 64, gap = 4, baseX = 100, baseY = h - 110;
+
+        // D-pad background
+        this.add.circle(baseX, baseY, 100, 0x000000, 0.35).setStrokeStyle(2, 0xffffff, 0.1).setDepth(100).setScrollFactor(0);
+
+        function makeArrow(g, dir) {
+            g.fillStyle(0xffffff, 0.85);
+            var s = 14;
+            if (dir === 'up') g.fillTriangle(0, -s, s, s * 0.6, -s, s * 0.6);
+            else if (dir === 'down') g.fillTriangle(0, s, s, -s * 0.6, -s, -s * 0.6);
+            else if (dir === 'left') g.fillTriangle(-s, 0, s * 0.6, -s, s * 0.6, s);
+            else if (dir === 'right') g.fillTriangle(s, 0, -s * 0.6, -s, -s * 0.6, s);
+        }
+
         var dirs = [
-            { key: 'up', x: baseX, y: baseY - dSize - dPad, label: '\u25B2' },
-            { key: 'down', x: baseX, y: baseY + dSize + dPad, label: '\u25BC' },
-            { key: 'left', x: baseX - dSize - dPad, y: baseY, label: '\u25C0' },
-            { key: 'right', x: baseX + dSize + dPad, y: baseY, label: '\u25B6' }
+            { key: 'up', dir: 'up', x: baseX, y: baseY - bs - gap },
+            { key: 'down', dir: 'down', x: baseX, y: baseY + bs + gap },
+            { key: 'left', dir: 'left', x: baseX - bs - gap, y: baseY },
+            { key: 'right', dir: 'right', x: baseX + bs + gap, y: baseY }
         ];
         for (var i = 0; i < dirs.length; i++) {
-            var d = dirs[i];
-            var btn = this.add.circle(d.x, d.y, dSize / 2, 0xffffff, 0.15).setDepth(100).setScrollFactor(0).setInteractive();
-            this.add.text(d.x, d.y, d.label, { fontSize: '18px', color: '#ffffff' }).setOrigin(0.5).setDepth(101).setScrollFactor(0).setAlpha(0.5);
-            (function(key) {
-                btn.on('pointerdown', function() { self.touchDir[key] = true; });
-                btn.on('pointerup', function() { self.touchDir[key] = false; });
-                btn.on('pointerout', function() { self.touchDir[key] = false; });
-            })(d.key);
+            (function(d) {
+                var bg = self.add.graphics().setDepth(101).setScrollFactor(0);
+                bg.fillStyle(0x2a2a4a, 0.8); bg.fillRoundedRect(d.x - bs/2, d.y - bs/2, bs, bs, 12);
+                bg.lineStyle(2, 0x6666aa, 0.4); bg.strokeRoundedRect(d.x - bs/2, d.y - bs/2, bs, bs, 12);
+                var arrow = self.add.graphics().setPosition(d.x, d.y).setDepth(102).setScrollFactor(0);
+                makeArrow(arrow, d.dir);
+                var hit = self.add.rectangle(d.x, d.y, bs, bs, 0xffffff, 0).setDepth(103).setScrollFactor(0).setInteractive();
+                hit.on('pointerdown', function() { self.touchDir[d.key] = true; bg.clear(); bg.fillStyle(0x4a4a7a,0.9); bg.fillRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); bg.lineStyle(2,0x8888cc,0.6); bg.strokeRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); });
+                hit.on('pointerup', function() { self.touchDir[d.key] = false; bg.clear(); bg.fillStyle(0x2a2a4a,0.8); bg.fillRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); bg.lineStyle(2,0x6666aa,0.4); bg.strokeRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); });
+                hit.on('pointerout', function() { self.touchDir[d.key] = false; bg.clear(); bg.fillStyle(0x2a2a4a,0.8); bg.fillRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); bg.lineStyle(2,0x6666aa,0.4); bg.strokeRoundedRect(d.x-bs/2,d.y-bs/2,bs,bs,12); });
+            })(dirs[i]);
         }
+
         // Action button
-        var actBtn = this.add.circle(w - 60, h - 90, 28, 0xe94560, 0.4).setDepth(100).setScrollFactor(0).setInteractive();
-        this.add.text(w - 60, h - 90, '\u2694', { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5).setDepth(101).setScrollFactor(0);
-        actBtn.on('pointerdown', function() { self.doAction(); });
+        var actX = w - 100, actY = h - 110;
+        var actBtn = this.add.circle(actX, actY, 48, 0xe94560, 0.7).setStrokeStyle(3, 0xffffff, 0.4).setDepth(101).setScrollFactor(0).setInteractive();
+        this.add.text(actX, actY, '\u2694', { fontFamily: 'Nunito', fontSize: '38px', fontStyle: '900', color: '#ffffff' }).setOrigin(0.5).setDepth(102).setScrollFactor(0);
+        actBtn.on('pointerdown', function() { actBtn.setFillStyle(0xff6680, 0.9); self.doAction(); });
+        actBtn.on('pointerup', function() { actBtn.setFillStyle(0xe94560, 0.7); });
+        actBtn.on('pointerout', function() { actBtn.setFillStyle(0xe94560, 0.7); });
     }
 
     update() {
