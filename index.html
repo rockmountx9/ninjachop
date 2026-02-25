@@ -24,7 +24,7 @@
             pointer-events: none;
             z-index: 0;
         }
-        canvas { display: block; max-width: 100vw; max-height: 100vh; position: relative; z-index: 1; }
+        canvas { display: block; z-index: 1; }
     </style>
 </head>
 <body>
@@ -586,49 +586,118 @@ class SplashScene extends Phaser.Scene {
         var w = this.scale.width, h = this.scale.height, self = this;
         this.transitioning = false;
         this.cameras.main.setBackgroundColor('#000000');
-
-        // Fade in from black
-        this.cameras.main.fadeIn(800);
-
-        // Spirited Minds logo — glowing text with subtle animation
+        var res = window.devicePixelRatio || 3;
         var logoY = h * 0.38;
-        var glow = this.add.circle(w/2, logoY, 80, 0xf5c842, 0).setDepth(0);
-        this.tweens.add({ targets: glow, alpha: 0.08, scaleX: 1.5, scaleY: 1.5, duration: 1500, ease: 'Sine.easeOut' });
 
-        var spirited = this.add.text(w/2, logoY, 'GIFTED YOUNGSTERS', {
+        // === CRT POWER-ON EFFECT ===
+        // White horizontal scanline sweeps down the screen
+        var powerLine = this.add.rectangle(w/2, 0, w, 3, 0xffffff, 0.9).setDepth(50);
+        this.tweens.add({
+            targets: powerLine, y: h, duration: 400, ease: 'Quad.easeIn',
+            onComplete: function() { powerLine.destroy(); }
+        });
+
+        // Brief white flash after sweep
+        var flash = this.add.rectangle(w/2, h/2, w, h, 0xffffff, 0).setDepth(49);
+        this.tweens.add({ targets: flash, alpha: 0.15, duration: 100, delay: 300, yoyo: true, hold: 50,
+            onComplete: function() { flash.destroy(); }
+        });
+
+        // === CRT SCANLINES OVERLAY ===
+        var scanGfx = this.add.graphics().setDepth(40).setAlpha(0);
+        for (var sy = 0; sy < h; sy += 4) {
+            scanGfx.fillStyle(0x000000, 0.15);
+            scanGfx.fillRect(0, sy, w, 2);
+        }
+        this.tweens.add({ targets: scanGfx, alpha: 1, duration: 500, delay: 400 });
+
+        // === CRT VIGNETTE (dark corners) ===
+        var vigGfx = this.add.graphics().setDepth(39).setAlpha(0);
+        vigGfx.fillStyle(0x000000, 0.4);
+        vigGfx.fillRect(0, 0, w, 30); vigGfx.fillRect(0, h - 30, w, 30);
+        vigGfx.fillRect(0, 0, 20, h); vigGfx.fillRect(w - 20, 0, 20, h);
+        vigGfx.fillStyle(0x000000, 0.2);
+        vigGfx.fillRect(0, 30, w, 20); vigGfx.fillRect(0, h - 50, w, 20);
+        vigGfx.fillRect(20, 0, 15, h); vigGfx.fillRect(w - 35, 0, 15, h);
+        this.tweens.add({ targets: vigGfx, alpha: 1, duration: 600, delay: 400 });
+
+        // === BROUGHT TO YOU BY — flickers on like a CRT warming up ===
+        var brought = this.add.text(w/2, logoY - 40, 'Brought to you by', {
+            fontFamily: 'Nunito', fontSize: '14px', fontStyle: '600', color: '#557766'
+        }).setOrigin(0.5).setAlpha(0).setResolution(res).setDepth(10);
+        // Rapid flicker sequence: on-off-on-off-on (CRT warmup)
+        this.time.delayedCall(500, function() {
+            self.tweens.add({ targets: brought, alpha: 0.6, duration: 40, yoyo: true, repeat: 2, onComplete: function() {
+                self.tweens.add({ targets: brought, alpha: 0.3, duration: 50, yoyo: true, onComplete: function() {
+                    brought.setAlpha(0.8);
+                }});
+            }});
+        });
+
+        // === GIFTED YOUNGSTERS — typewriter character reveal ===
+        var titleStr = 'GIFTED YOUNGSTERS';
+        var titleText = this.add.text(w/2, logoY, '', {
             fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#f5c842',
             stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
-        this.tweens.add({ targets: spirited, alpha: 1, duration: 1000, delay: 300, ease: 'Quad.easeOut' });
+        }).setOrigin(0.5).setDepth(10).setResolution(res);
+        // Blinking cursor
+        var cursor = this.add.text(w/2, logoY, '_', {
+            fontFamily: 'Nunito', fontSize: '32px', fontStyle: '900', color: '#f5c842'
+        }).setOrigin(0, 0.5).setDepth(10).setResolution(res);
+        this.tweens.add({ targets: cursor, alpha: 0, duration: 300, yoyo: true, repeat: -1 });
 
-        // Subtitle
+        // Type characters one by one
+        var charIdx = 0;
+        this.time.addEvent({
+            delay: 70, repeat: titleStr.length - 1,
+            callback: function() {
+                charIdx++;
+                titleText.setText(titleStr.substring(0, charIdx));
+                cursor.x = titleText.x + titleText.width/2 + 2;
+                if (charIdx >= titleStr.length) cursor.destroy();
+            }
+        });
+
+        // === GLOW behind title (fades in after typing) ===
+        var glow = this.add.circle(w/2, logoY, 80, 0xf5c842, 0).setDepth(0);
+        this.tweens.add({ targets: glow, alpha: 0.08, scaleX: 1.5, scaleY: 1.5, duration: 1200, delay: 500 + titleStr.length * 70, ease: 'Sine.easeOut' });
+
+        // === SUBTITLE — fades in after title typed ===
         var subtitle = this.add.text(w/2, logoY + 50, 'Apps made for ADHD and other\nNeurodivergent children', {
-            fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#8888aa',
+            fontFamily: 'Nunito', fontSize: '15px', fontStyle: '600', color: '#668877',
             stroke: '#000000', strokeThickness: 2, align: 'center', lineSpacing: 4
-        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
-        this.tweens.add({ targets: subtitle, alpha: 1, duration: 800, delay: 900, ease: 'Quad.easeOut' });
+        }).setOrigin(0.5).setAlpha(0).setResolution(res).setDepth(10);
+        this.tweens.add({ targets: subtitle, alpha: 0.8, duration: 600, delay: 500 + titleStr.length * 70 + 200 });
 
-        // "Brought to you by" — small text above
-        var brought = this.add.text(w/2, logoY - 40, 'Brought to you by', {
-            fontFamily: 'Nunito', fontSize: '14px', fontStyle: '600', color: '#555566'
-        }).setOrigin(0.5).setAlpha(0).setResolution(window.devicePixelRatio || 3);
-        this.tweens.add({ targets: brought, alpha: 1, duration: 600, delay: 200 });
+        // === DECORATIVE LINE ===
+        var line = this.add.rectangle(w/2, logoY + 85, 0, 2, 0x334433).setDepth(10);
+        this.tweens.add({ targets: line, width: 200, duration: 600, delay: 500 + titleStr.length * 70 + 500, ease: 'Quad.easeOut' });
 
-        // Decorative line
-        var line = this.add.rectangle(w/2, logoY + 85, 0, 2, 0x333344);
-        this.tweens.add({ targets: line, width: 200, duration: 800, delay: 1200, ease: 'Quad.easeOut' });
+        // === SUBTLE CRT FLICKER (periodic) ===
+        var screenOverlay = this.add.rectangle(w/2, h/2, w, h, 0xffffff, 0).setDepth(45);
+        this.time.addEvent({
+            delay: 800, repeat: 3,
+            callback: function() {
+                self.tweens.add({ targets: screenOverlay, alpha: 0.03, duration: 30, yoyo: true });
+            }
+        });
 
         function goToBoot() {
             if (self.transitioning) return;
             self.transitioning = true;
-            self.cameras.main.fadeOut(300);
-            self.time.delayedCall(300, function() {
-                self.scene.start('BootScene');
+            // CRT power-off effect: screen squeezes to horizontal line then dot
+            var blackout = self.add.rectangle(w/2, h/2, w, h, 0x000000, 0).setDepth(60);
+            self.tweens.add({ targets: blackout, alpha: 1, duration: 200 });
+            self.tweens.add({
+                targets: self.cameras.main, scaleY: 0.005, duration: 200, delay: 100,
+                onComplete: function() {
+                    self.scene.start('BootScene');
+                }
             });
         }
 
-        // Transition to BootScene after 3.5s
-        this.time.delayedCall(3500, goToBoot);
+        // Transition to BootScene after 4.5s (extra time for typewriter)
+        this.time.delayedCall(4500, goToBoot);
 
         // Skip on click/tap/key
         this.input.on('pointerdown', goToBoot);
@@ -7141,7 +7210,7 @@ var _vw = window.innerWidth || 480;
 var _vh = window.innerHeight || 854;
 var _aspect = _vw / _vh;
 var GAME_H = 960;
-var GAME_W = Math.max(540, Math.min(960, Math.round(GAME_H * _aspect)));
+var GAME_W = Math.max(360, Math.min(960, Math.round(GAME_H * _aspect)));
 
 var config = {
     type: Phaser.AUTO,
