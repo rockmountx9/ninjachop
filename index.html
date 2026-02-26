@@ -2860,7 +2860,7 @@ class WorldScene extends Phaser.Scene {
 
         // Panel
         var panelX = ox + this.scale.width/2, panelY = oy + 350;
-        var panel = this.add.rectangle(panelX, panelY, 380, 420, 0x16213e, 0.95).setStrokeStyle(3, COLORS.gold);
+        var panel = this.add.rectangle(panelX, panelY + 40, 380, 500, 0x16213e, 0.95).setStrokeStyle(3, COLORS.gold);
         this.quickBattleContainer.add(panel);
 
         // Title
